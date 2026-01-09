@@ -22,3 +22,6 @@ spring:
   sql:
     init:
       mode: always
+jwt:
+  secret: "your-token"
+  expiration: 86400000
