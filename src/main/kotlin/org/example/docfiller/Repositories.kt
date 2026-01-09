@@ -56,7 +56,14 @@ interface EmployeeRepository : BaseRepository<Employee>{
 }
 
 @Repository
-interface PlaceHolderRepository : BaseRepository<PlaceHolder>{
+interface PlaceHolderRepository : BaseRepository<PlaceHolder> {
+    fun findAllByAttachHashAndDeletedFalse(hash: String): List<PlaceHolder>
+    fun findAllByAttachIdAndDeletedFalse(attachId: Long): List<PlaceHolder>
+    fun deleteAllByAttachHash(hash: String)
+}
 
+@Repository
+interface AttachRepository : BaseRepository<Attach> {
+    fun findByHashAndDeletedFalse(hash: String): Attach?
 }
 

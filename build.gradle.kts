@@ -42,6 +42,10 @@ dependencies {
     implementation("org.apache.poi:poi:5.2.5")
     implementation("org.apache.poi:poi-ooxml:5.2.5")
 
+    // DOCX -> PDF convert uchun (documents4j - LibreOffice orqali)
+    implementation("com.documents4j:documents4j-local:1.1.12")
+    implementation("com.documents4j:documents4j-transformer-msoffice-word:1.1.12")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
