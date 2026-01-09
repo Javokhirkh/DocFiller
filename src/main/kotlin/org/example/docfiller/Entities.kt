@@ -5,9 +5,11 @@ import jakarta.persistence.Entity
 import jakarta.persistence.EntityListeners
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.ManyToOne
 import jakarta.persistence.MappedSuperclass
 import jakarta.persistence.Table
 import jakarta.persistence.Temporal
@@ -43,4 +45,17 @@ class Employee(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false) var role: UserRole,
+) : BaseEntity()
+
+@Entity
+@Table(name = "attach")
+class Attach(
+    @Column(nullable = false, name = "origin_name") var originName: String?,
+    @Column(nullable = false) var size: Long,
+    @Column(nullable = false) var type: String?,
+    @Column(nullable = false) var path: String,
+    @Column(nullable = false) var fullPath: String,
+    @Column(nullable = false, unique = true) var hash: String,
+    @ManyToOne(fetch = FetchType.LAZY)
+    var employee : Employee
 ) : BaseEntity()
