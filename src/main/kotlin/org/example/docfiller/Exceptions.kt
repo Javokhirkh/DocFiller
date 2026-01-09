@@ -69,3 +69,16 @@ sealed class DocFillerAppException(message: String? = null) : RuntimeException()
         )
     }
 }
+
+class EmployeeNotFoundException() : DocFillerAppException() {
+    override fun errorType() = ErrorCode.EMPLOYEE_NOT_FOUND
+
+}
+
+class EmployeeAlreadyExistsException() : DocFillerAppException() {
+    override fun errorType() = ErrorCode.EMPLOYEE_ALREADY_EXISTS
+}
+
+class InvalidPasswordException() : DocFillerAppException(){
+    override fun errorType() = ErrorCode.INVALID_PASSWORD
+}
