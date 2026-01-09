@@ -10,3 +10,7 @@ enum class ErrorCode(val code: Int, val message: String) {
     EMPLOYEE_ALREADY_EXISTS(101, "EMPLOYEE_ALREADY_EXISTS"),
     EMPLOYEE_NOT_AUTHENTICATED(102, "EMPLOYEE_NOT_AUTHENTICATED"),
 }
+
+enum class DocStatus{
+    TEMPLATED, READY
+}
