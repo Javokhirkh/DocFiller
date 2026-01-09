@@ -51,6 +51,10 @@ class BaseRepositoryImpl<T : BaseEntity>(
     }
 }
 
+interface EmployeeRepository : BaseRepository<Employee>{
+    fun findByUsernameAndDeletedFalse(username: String): Employee?
+}
+
 @Repository
 interface PlaceHolderRepository : BaseRepository<PlaceHolder>{
 
