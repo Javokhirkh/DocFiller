@@ -59,3 +59,24 @@ class Attach(
     @ManyToOne(fetch = FetchType.LAZY)
     var employee : Employee
 ) : BaseEntity()
+
+@Entity
+@Table(name ="place_holder")
+class PlaceHolder(
+    @Column(name ="key", nullable = false)
+    val key: String,
+    @Column(name ="location_type", nullable = false)
+    val locationType: String,
+    @Column(name = "header_index")
+    val headerIndex: Int? = null,
+    @Column(name = "paragraph_index")
+    val paragraphIndex: Int? = null,
+    @Column(name = "table_index")
+    val tableIndex: Int? = null,
+    @Column(name = "row_index")
+    val rowIndex: Int? = null,
+    @Column(name = "column_index")
+    val columnIndex: Int? = null,
+    @Column(name = "footer_index")
+    val footerIndex: Int? = null,
+) : BaseEntity()
