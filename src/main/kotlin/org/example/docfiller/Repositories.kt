@@ -49,3 +49,7 @@ class BaseRepositoryImpl<T : BaseEntity>(
         return save(t).apply { entityManager.refresh(this) }
     }
 }
+
+interface EmployeeRepository : BaseRepository<Employee>{
+    fun findByUsernameAndDeletedFalse(username: String): Employee?
+}
