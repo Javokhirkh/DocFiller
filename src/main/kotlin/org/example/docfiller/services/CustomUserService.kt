@@ -12,10 +12,10 @@ class CustomUserService(
     private val repository: EmployeeRepository
 ) : UserDetailsService {
     override fun loadUserByUsername(username: String): UserDetails {
-        return repository.findByUsernameAndDeletedFalse(username)?.let {
+        return repository.findByPhoneNumberAndDeletedFalse(username)?.let {
             UserDetailsResponse(
                 id = it.id!!,
-                email = it.email,
+                phoneNumber = it.phoneNumber,
                 firstName = it.firstName,
                 lastName = it.lastName,
                 role = it.role,
