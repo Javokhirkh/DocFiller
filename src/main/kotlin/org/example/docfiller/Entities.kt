@@ -39,12 +39,13 @@ abstract class BaseEntity(
 class Employee(
     @Column(nullable = false) var firstName: String,
     @Column(nullable = false) var lastName: String,
-    @Column(nullable = false) var email: String,
-    @Column(nullable = false, unique = true) var username: String,
+    @Column(nullable = false) var phoneNumber: String,
     @Column(nullable = false) var password: String,
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false) var role: UserRole,
+    @ManyToOne(fetch = FetchType.LAZY)
+    val organization: Organization? = null,
 ) : BaseEntity()
 
 @Entity
@@ -61,22 +62,39 @@ class Attach(
 ) : BaseEntity()
 
 @Entity
-@Table(name ="place_holder")
+@Table(name = "place_holder")
 class PlaceHolder(
-    @Column(name ="key", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    var attach: Attach,
+
+    @Column(name = "key", nullable = false)
     val key: String,
-    @Column(name ="location_type", nullable = false)
+
+    @Column(name = "location_type", nullable = false)
     val locationType: String,
+
     @Column(name = "header_index")
     val headerIndex: Int? = null,
+
     @Column(name = "paragraph_index")
     val paragraphIndex: Int? = null,
+
     @Column(name = "table_index")
     val tableIndex: Int? = null,
+
     @Column(name = "row_index")
     val rowIndex: Int? = null,
+
     @Column(name = "column_index")
     val columnIndex: Int? = null,
+
     @Column(name = "footer_index")
     val footerIndex: Int? = null,
 ) : BaseEntity()
+
+@Entity
+class Organization(
+    @Column(nullable = false)val name: String,
+    @Column(nullable = false) var phoneNumber: String,
+    ) : BaseEntity(){
+}

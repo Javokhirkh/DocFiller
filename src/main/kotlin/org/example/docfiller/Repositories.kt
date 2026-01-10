@@ -52,11 +52,18 @@ class BaseRepositoryImpl<T : BaseEntity>(
 }
 
 interface EmployeeRepository : BaseRepository<Employee>{
-    fun findByUsernameAndDeletedFalse(username: String): Employee?
+    fun findByPhoneNumberAndDeletedFalse(phoneNumber: String): Employee?
 }
 
 @Repository
-interface PlaceHolderRepository : BaseRepository<PlaceHolder>{
+interface PlaceHolderRepository : BaseRepository<PlaceHolder> {
+    fun findAllByAttachHashAndDeletedFalse(hash: String): List<PlaceHolder>
+    fun findAllByAttachIdAndDeletedFalse(attachId: Long): List<PlaceHolder>
+    fun deleteAllByAttachHash(hash: String)
+}
 
+@Repository
+interface AttachRepository : BaseRepository<Attach> {
+    fun findByHashAndDeletedFalse(hash: String): Attach?
 }
 

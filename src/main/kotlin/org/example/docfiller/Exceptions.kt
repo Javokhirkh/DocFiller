@@ -82,3 +82,19 @@ class EmployeeAlreadyExistsException() : DocFillerAppException() {
 class InvalidPasswordException() : DocFillerAppException(){
     override fun errorType() = ErrorCode.INVALID_PASSWORD
 }
+
+class AttachNotFoundException() : DocFillerAppException() {
+    override fun errorType() = ErrorCode.ATTACH_NOT_FOUND
+}
+
+class PlaceHolderNotFoundException() : DocFillerAppException() {
+    override fun errorType() = ErrorCode.PLACEHOLDER_NOT_FOUND
+}
+
+class InvalidFileTypeException() : DocFillerAppException() {
+    override fun errorType() = ErrorCode.INVALID_FILE_TYPE
+}
+
+class FileReadException() : DocFillerAppException() {
+    override fun errorType() = ErrorCode.FILE_READ_ERROR
+}

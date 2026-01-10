@@ -25,7 +25,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
-
+    implementation("org.springframework.boot:spring-boot-starter-validation")
 
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -41,6 +41,10 @@ dependencies {
     //fileni oqish va placeholderlarni ozgartirish uchun
     implementation("org.apache.poi:poi:5.2.5")
     implementation("org.apache.poi:poi-ooxml:5.2.5")
+
+    // DOCX -> PDF convert uchun (documents4j - LibreOffice orqali)
+    implementation("com.documents4j:documents4j-local:1.1.12")
+    implementation("com.documents4j:documents4j-transformer-msoffice-word:1.1.12")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
