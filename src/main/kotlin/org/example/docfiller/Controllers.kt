@@ -10,7 +10,6 @@ import jakarta.validation.Valid
 import org.example.docfiller.dtos.LoginRequest
 import org.example.docfiller.dtos.LoginResponse
 import org.example.docfiller.services.EmployeeService
-import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -70,16 +69,6 @@ class PlaceHolderController(
 
     }
 }
-import jakarta.validation.Valid
-import org.example.docfiller.dtos.LoginRequest
-import org.example.docfiller.dtos.LoginResponse
-import org.example.docfiller.services.EmployeeService
-import org.springframework.web.bind.annotation.CrossOrigin
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/auth")
