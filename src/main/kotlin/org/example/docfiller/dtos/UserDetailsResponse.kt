@@ -7,7 +7,7 @@ import org.springframework.security.core.userdetails.UserDetails
 
 data class UserDetailsResponse(
     val id: Long,
-    val email: String,
+    val phoneNumber: String,
     val firstName: String,
     val lastName: String?,
     val role: UserRole,
@@ -22,7 +22,7 @@ data class UserDetailsResponse(
     }
 
     override fun getUsername(): String {
-        return email
+        return phoneNumber
     }
 
 }

@@ -52,7 +52,7 @@ class BaseRepositoryImpl<T : BaseEntity>(
 }
 
 interface EmployeeRepository : BaseRepository<Employee>{
-    fun findByUsernameAndDeletedFalse(username: String): Employee?
+    fun findByPhoneNumberAndDeletedFalse(phoneNumber: String): Employee?
 }
 
 @Repository

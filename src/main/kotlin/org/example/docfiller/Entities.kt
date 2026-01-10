@@ -39,12 +39,13 @@ abstract class BaseEntity(
 class Employee(
     @Column(nullable = false) var firstName: String,
     @Column(nullable = false) var lastName: String,
-    @Column(nullable = false) var email: String,
-    @Column(nullable = false, unique = true) var username: String,
+    @Column(nullable = false) var phoneNumber: String,
     @Column(nullable = false) var password: String,
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false) var role: UserRole,
+    @ManyToOne(fetch = FetchType.LAZY)
+    val organization: Organization? = null,
 ) : BaseEntity()
 
 @Entity
@@ -90,3 +91,10 @@ class PlaceHolder(
     @Column(name = "footer_index")
     val footerIndex: Int? = null,
 ) : BaseEntity()
+
+@Entity
+class Organization(
+    @Column(nullable = false)val name: String,
+    @Column(nullable = false) var phoneNumber: String,
+    ) : BaseEntity(){
+}

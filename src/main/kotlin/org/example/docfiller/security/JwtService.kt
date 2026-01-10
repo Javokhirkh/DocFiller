@@ -25,11 +25,11 @@ class JwtService(
     private fun key() =
         Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret))
 
-    fun generateToken(username: String, role: String): String {
+    fun generateToken(phoneNumber: String, role: String): String {
         val claims = mapOf("roles" to role)
         return Jwts.builder()
             .setClaims(claims)
-            .setSubject(username)
+            .setSubject(phoneNumber)
             .setIssuedAt(Date())
             .setExpiration(Date(System.currentTimeMillis() + expiration))
             .signWith(key(), SignatureAlgorithm.HS512)
