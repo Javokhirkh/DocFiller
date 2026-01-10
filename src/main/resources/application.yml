@@ -1,4 +1,6 @@
 spring:
+  profiles:
+    active: local
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/shop
@@ -20,3 +22,6 @@ spring:
   sql:
     init:
       mode: always
+jwt:
+  secret: "your-token"
+  expiration: 86400000
