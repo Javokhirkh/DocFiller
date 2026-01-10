@@ -155,7 +155,6 @@ class PlaceHolderServiceImpl(
         if (placeholders.isEmpty()) {
             val attach = attachRepository.findByHashAndDeletedFalse(attachHash)
                 ?: throw AttachNotFoundException()
-            // Template mavjud lekin scan qilinmagan
             extractAndSavePlaceHolders(attach)
             return placeHolderRepository.findAllByAttachHashAndDeletedFalse(attachHash)
                 .map { it.key }

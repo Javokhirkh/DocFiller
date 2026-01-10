@@ -2,17 +2,14 @@ package org.example.docfiller.dtos
 
 import org.example.docfiller.FileType
 
-// Template dan placeholder keylarni olish uchun request
 data class GetPlaceHolderKeysRequest(
     val attachHash: String
 )
 
-// Placeholder keylar response
 data class PlaceHolderKeysResponse(
     val keys: List<String>
 )
 
-// File yaratish uchun request
 data class CreateFileRequest(
     val attachHash: String,
     val fileName: String,
@@ -20,7 +17,6 @@ data class CreateFileRequest(
     val placeholders: Map<String, String>
 )
 
-// Placeholder location response (debug/info uchun)
 data class PlaceHolderLocationResponse(
     val id: Long?,
     val key: String,
@@ -33,7 +29,6 @@ data class PlaceHolderLocationResponse(
     val footerIndex: Int?,
 )
 
-// File yaratilgandan keyingi response
 data class CreatedFileResponse(
     val fileName: String,
     val fileType: FileType,
@@ -41,7 +36,6 @@ data class CreatedFileResponse(
     // TODO: FileService dan qaytadigan ma'lumotlar qo'shiladi
 )
 
-// Scan statistikasi
 data class ScanStatisticsResponse(
     val totalPlaceholders: Int,
     val uniqueKeys: Int,
