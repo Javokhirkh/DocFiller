@@ -132,3 +132,6 @@ class UnknownPlaceholderKeyException(val keys: Set<String>) : DocFillerAppExcept
 class EmptyPlaceholderValueException(val keys: Set<String>) : DocFillerAppException() {
     override fun errorType() = ErrorCode.EMPTY_PLACEHOLDER_VALUE
 }
+class EmployeeNotAuthenticatedException() : DocFillerAppException(){
+    override fun errorType() = ErrorCode.EMPLOYEE_NOT_AUTHENTICATED
+}
