@@ -67,3 +67,8 @@ interface AttachRepository : BaseRepository<Attach> {
     fun findByHashAndDeletedFalse(hash: String): Attach?
 }
 
+interface OrganizationRepository : BaseRepository<Organization>{
+    fun existsByNameAndDeletedFalse(name: String): Boolean
+    fun existsByPhoneNumberAndDeletedFalse(phoneNumber: String): Boolean
+}
+
