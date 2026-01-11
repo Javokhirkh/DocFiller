@@ -21,6 +21,7 @@ import org.springframework.data.annotation.LastModifiedBy
 import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import java.time.LocalDateTime
+import java.util.UUID
 
 
 @MappedSuperclass
@@ -56,9 +57,17 @@ class Attach(
     @Column(nullable = false) var type: String?,
     @Column(nullable = false) var path: String,
     @Column(nullable = false) var fullPath: String,
-    @Column(nullable = false, unique = true) var hash: String,
+    @Column(nullable = false, unique = true) var hash: UUID,
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    var status: DocStatus = DocStatus.TEMPLATE,
+
     @ManyToOne(fetch = FetchType.LAZY)
-    var employee : Employee
+    var employee: Employee,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    var organization: Organization
 ) : BaseEntity()
 
 @Entity

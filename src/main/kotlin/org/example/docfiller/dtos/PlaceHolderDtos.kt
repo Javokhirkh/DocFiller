@@ -1,9 +1,10 @@
 package org.example.docfiller.dtos
 
 import org.example.docfiller.FileType
+import java.util.UUID
 
 data class GetPlaceHolderKeysRequest(
-    val attachHash: String
+    val attachHash: UUID
 )
 
 data class PlaceHolderKeysResponse(
@@ -11,10 +12,18 @@ data class PlaceHolderKeysResponse(
 )
 
 data class CreateFileRequest(
-    val attachHash: String,
+    val userId: Long,
+    val attachHash: UUID,
     val fileName: String,
     val fileType: FileType,
     val placeholders: Map<String, String>
+)
+
+data class AttachUploadResponse(
+    val id: Long,
+    val hash: UUID,
+    val originalName: String?,
+    val placeholderCount: Int
 )
 
 data class PlaceHolderLocationResponse(
@@ -30,10 +39,9 @@ data class PlaceHolderLocationResponse(
 )
 
 data class CreatedFileResponse(
+    val file: FileDto,
     val fileName: String,
-    val fileType: FileType,
-    val message: String
-    // TODO: FileService dan qaytadigan ma'lumotlar qo'shiladi
+    val fileType: FileType
 )
 
 data class ScanStatisticsResponse(

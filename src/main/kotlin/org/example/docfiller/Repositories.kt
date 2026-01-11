@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.support.SimpleJpaRepository
 import org.springframework.data.repository.NoRepositoryBean
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Repository
+import java.util.UUID
 
 
 @NoRepositoryBean
@@ -57,16 +58,15 @@ interface EmployeeRepository : BaseRepository<Employee>{
 
 @Repository
 interface PlaceHolderRepository : BaseRepository<PlaceHolder> {
-    fun findAllByAttachHashAndDeletedFalse(hash: String): List<PlaceHolder>
+    fun findAllByAttachHashAndDeletedFalse(hash: UUID): List<PlaceHolder>
     fun findAllByAttachIdAndDeletedFalse(attachId: Long): List<PlaceHolder>
-    fun deleteAllByAttachHash(hash: String)
+    fun deleteAllByAttachHash(hash: UUID)
 }
 
 @Repository
 interface AttachRepository : BaseRepository<Attach> {
-    fun findByHashAndDeletedFalse(hash: String): Attach?
-
-    fun existsByHash(hash: String): Boolean
+    fun findByHashAndDeletedFalse(hash: UUID): Attach?
+    fun existsByHash(hash: UUID): Boolean
 }
 
 interface OrganizationRepository : BaseRepository<Organization>{

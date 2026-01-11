@@ -5,7 +5,7 @@ spring:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/docfiller
     username: postgres
-    password: 1111
+    password: root
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     properties:
@@ -23,5 +23,5 @@ spring:
     init:
       mode: always
 jwt:
-  secret: "your-token"
+  secret: "dG9rZW5zZWNyZXRrZXlmb3Jkb2NmaWxsZXJhcHBsaWNhdGlvbnRoYXRpc2F0bGVhc3Q2NGJ5dGVzbG9uZ2Zvckhhc2g1MTI="
   expiration: 86400000

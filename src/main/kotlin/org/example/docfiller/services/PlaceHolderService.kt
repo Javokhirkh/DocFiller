@@ -10,25 +10,30 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.time.LocalDate
+import java.util.UUID
 
 interface PlaceHolderService {
     fun extractAndSavePlaceHolders(attach: Attach): Int
     fun extractAndSavePlaceHolders(file: File, attach: Attach): Int
     fun extractAndSavePlaceHolders(fileBytes: ByteArray, attach: Attach): Int
-    fun getPlaceHolderKeys(attachHash: String): List<String>
-    fun getPlaceHolderLocations(attachHash: String): List<PlaceHolderLocationResponse>
-    fun getStatistics(attachHash: String): ScanStatisticsResponse
-    fun createFilledDocument(request: CreateFileRequest): ByteArray
+    fun getPlaceHolderKeys(attachHash: UUID): List<String>
+    fun getStatistics(attachHash: UUID): ScanStatisticsResponse
+    fun createFilledDocument(request: CreateFileRequest): CreatedFileResponse
 }
 
 @Service
 class PlaceHolderServiceImpl(
     private val placeHolderRepository: PlaceHolderRepository,
     private val attachRepository: AttachRepository,
+    private val employeeRepository: EmployeeRepository,
     private val pdfConverterService: PdfConverterService
 ) : PlaceHolderService {
 
     private val placeholderRegex = Regex("#\\w+")
+    private val uploadRoot = Paths.get("uploads")
 
     @Transactional
     override fun extractAndSavePlaceHolders(attach: Attach): Int {
@@ -72,7 +77,6 @@ class PlaceHolderServiceImpl(
     private fun scanAndSaveFromDocument(document: XWPFDocument, attach: Attach): Int {
         val placeholders = mutableListOf<PlaceHolder>()
 
-        // 1. Scan Headers
         document.headerList.forEachIndexed { headerIndex, header ->
             header.paragraphs.forEachIndexed { paragraphIndex, paragraph ->
                 val text = paragraph.text
@@ -90,7 +94,6 @@ class PlaceHolderServiceImpl(
             }
         }
 
-        // 2. Scan Paragraphs
         document.paragraphs.forEachIndexed { paragraphIndex, paragraph ->
             val text = paragraph.text
             placeholderRegex.findAll(text).forEach { match ->
@@ -105,7 +108,6 @@ class PlaceHolderServiceImpl(
             }
         }
 
-        // 3. Scan Tables
         document.tables.forEachIndexed { tableIndex, table ->
             table.rows.forEachIndexed { rowIndex, row ->
                 row.tableCells.forEachIndexed { columnIndex, cell ->
@@ -128,7 +130,6 @@ class PlaceHolderServiceImpl(
             }
         }
 
-        // 4. Scan Footers
         document.footerList.forEachIndexed { footerIndex, footer ->
             footer.paragraphs.forEachIndexed { paragraphIndex, paragraph ->
                 val text = paragraph.text
@@ -150,7 +151,7 @@ class PlaceHolderServiceImpl(
         return placeholders.size
     }
 
-    override fun getPlaceHolderKeys(attachHash: String): List<String> {
+    override fun getPlaceHolderKeys(attachHash: UUID): List<String> {
         val placeholders = placeHolderRepository.findAllByAttachHashAndDeletedFalse(attachHash)
         if (placeholders.isEmpty()) {
             val attach = attachRepository.findByHashAndDeletedFalse(attachHash)
@@ -164,24 +165,7 @@ class PlaceHolderServiceImpl(
         return placeholders.map { it.key }.distinct().sorted()
     }
 
-    override fun getPlaceHolderLocations(attachHash: String): List<PlaceHolderLocationResponse> {
-        val placeholders = placeHolderRepository.findAllByAttachHashAndDeletedFalse(attachHash)
-        return placeholders.map { ph ->
-            PlaceHolderLocationResponse(
-                id = ph.id,
-                key = ph.key,
-                locationType = ph.locationType,
-                headerIndex = ph.headerIndex,
-                paragraphIndex = ph.paragraphIndex,
-                tableIndex = ph.tableIndex,
-                rowIndex = ph.rowIndex,
-                columnIndex = ph.columnIndex,
-                footerIndex = ph.footerIndex
-            )
-        }
-    }
-
-    override fun getStatistics(attachHash: String): ScanStatisticsResponse {
+    override fun getStatistics(attachHash: UUID): ScanStatisticsResponse {
         val placeholders = placeHolderRepository.findAllByAttachHashAndDeletedFalse(attachHash)
 
         return ScanStatisticsResponse(
@@ -194,8 +178,15 @@ class PlaceHolderServiceImpl(
         )
     }
 
-    override fun createFilledDocument(request: CreateFileRequest): ByteArray {
-        val attach = attachRepository.findByHashAndDeletedFalse(request.attachHash)
+    @Transactional
+    override fun createFilledDocument(request: CreateFileRequest): CreatedFileResponse {
+        val employee = employeeRepository.findByIdAndDeletedFalse(request.userId)
+            ?: throw EmployeeNotFoundException()
+
+        val organization = employee.organization
+            ?: throw UserHasNoOrganizationException()
+
+        val templateAttach = attachRepository.findByHashAndDeletedFalse(request.attachHash)
             ?: throw AttachNotFoundException()
 
         val locations = placeHolderRepository.findAllByAttachHashAndDeletedFalse(request.attachHash)
@@ -203,20 +194,36 @@ class PlaceHolderServiceImpl(
             throw PlaceHolderNotFoundException()
         }
 
-        val file = File(attach.fullPath)
+        val templateKeys = locations.map { it.key }.toSet()
+        val requestKeys = request.placeholders.keys
+
+        val missingKeys = templateKeys - requestKeys
+        if (missingKeys.isNotEmpty()) {
+            throw MissingPlaceholderValueException(missingKeys)
+        }
+
+        val unknownKeys = requestKeys - templateKeys
+        if (unknownKeys.isNotEmpty()) {
+            throw UnknownPlaceholderKeyException(unknownKeys)
+        }
+
+        val emptyKeys = request.placeholders.filter { it.value.isBlank() }.keys
+        if (emptyKeys.isNotEmpty()) {
+            throw EmptyPlaceholderValueException(emptyKeys)
+        }
+
+        val file = File(templateAttach.fullPath)
         if (!file.exists()) {
             throw FileReadException()
         }
 
-        val outputBytes: ByteArray
+        var outputBytes: ByteArray
 
         FileInputStream(file).use { fis ->
             val document = XWPFDocument(fis)
 
-            // Group locations by type
             val grouped = locations.groupBy { it.locationType }
 
-            // Replace in Headers
             grouped["header"]?.forEach { loc ->
                 val header = document.headerList.getOrNull(loc.headerIndex ?: -1)
                 val paragraph = header?.paragraphs?.getOrNull(loc.paragraphIndex ?: -1)
@@ -225,7 +232,6 @@ class PlaceHolderServiceImpl(
                 }
             }
 
-            // Replace in Paragraphs
             grouped["paragraph"]?.forEach { loc ->
                 val paragraph = document.paragraphs.getOrNull(loc.paragraphIndex ?: -1)
                 if (paragraph != null && request.placeholders.containsKey(loc.key)) {
@@ -233,7 +239,6 @@ class PlaceHolderServiceImpl(
                 }
             }
 
-            // Replace in Tables
             grouped["table"]?.forEach { loc ->
                 val table = document.tables.getOrNull(loc.tableIndex ?: -1)
                 val row = table?.rows?.getOrNull(loc.rowIndex ?: -1)
@@ -245,7 +250,6 @@ class PlaceHolderServiceImpl(
                 }
             }
 
-            // Replace in Footers
             grouped["footer"]?.forEach { loc ->
                 val footer = document.footerList.getOrNull(loc.footerIndex ?: -1)
                 val paragraph = footer?.paragraphs?.getOrNull(loc.paragraphIndex ?: -1)
@@ -254,7 +258,6 @@ class PlaceHolderServiceImpl(
                 }
             }
 
-            // Write to ByteArray
             ByteArrayOutputStream().use { baos ->
                 document.write(baos)
                 outputBytes = baos.toByteArray()
@@ -263,12 +266,59 @@ class PlaceHolderServiceImpl(
             document.close()
         }
 
-        // Agar PDF kerak bo'lsa, convert qilish
-        if (request.fileType == FileType.PDF) {
-            return pdfConverterService.convertDocxToPdf(outputBytes)
+        val (extension, contentType) = when (request.fileType) {
+            FileType.PDF -> {
+                outputBytes = pdfConverterService.convertDocxToPdf(outputBytes)
+                "pdf" to "application/pdf"
+            }
+            FileType.DOCX -> "docx" to "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         }
 
-        return outputBytes
+        val hash = UUID.randomUUID()
+        val now = LocalDate.now()
+        val orgName = organization.name.replace(" ", "_")
+        val datePath = uploadRoot
+            .resolve(orgName)
+            .resolve(now.year.toString())
+            .resolve(String.format("%02d", now.monthValue))
+            .resolve(String.format("%02d", now.dayOfMonth))
+
+        Files.createDirectories(datePath)
+
+        val storedName = "$hash.$extension"
+        val fullPath = datePath.resolve(storedName)
+        Files.write(fullPath, outputBytes)
+
+        val fileName = "${request.fileName}.$extension"
+
+        val savedAttach = attachRepository.save(
+            Attach(
+                originName = fileName,
+                size = outputBytes.size.toLong(),
+                type = contentType,
+                path = datePath.toString(),
+                fullPath = fullPath.toString(),
+                hash = hash,
+                status = DocStatus.READY,
+                employee = employee,
+                organization = organization
+            )
+        )
+
+        val fileDto = FileDto(
+            id = savedAttach.id!!,
+            hash = savedAttach.hash,
+            originalName = savedAttach.originName,
+            size = savedAttach.size,
+            type = savedAttach.type,
+            path = savedAttach.path
+        )
+
+        return CreatedFileResponse(
+            file = fileDto,
+            fileName = fileName,
+            fileType = request.fileType
+        )
     }
 
     private fun replaceInParagraph(paragraph: XWPFParagraph, placeholder: String, value: String) {
@@ -283,7 +333,6 @@ class PlaceHolderServiceImpl(
         if (paragraph.runs.isNotEmpty()) {
             val firstRun = paragraph.runs[0]
 
-            // Remove other runs
             for (i in paragraph.runs.size - 1 downTo 1) {
                 paragraph.removeRun(i)
             }

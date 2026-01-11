@@ -1,45 +1,57 @@
 package org.example.docfiller.services
 
-import org.example.docfiller.Attach
-import org.example.docfiller.AttachRepository
-import org.example.docfiller.EmployeeRepository
-import org.example.docfiller.ErrorCode
+import org.example.docfiller.*
+import org.example.docfiller.dtos.AttachUploadResponse
+import org.example.docfiller.dtos.FileDto
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.security.MessageDigest
+import java.time.LocalDate
 import java.util.*
 
 @Service
 class AttachService(
     private val attachRepository: AttachRepository,
-    private val employeeRepository: EmployeeRepository
+    private val employeeRepository: EmployeeRepository,
+    private val placeHolderService: PlaceHolderService
 ) {
 
     private val uploadRoot: Path = Paths.get("uploads")
 
     @Transactional
-    fun upload(file: MultipartFile, employeeId: Long): Long {
-        val employee = employeeRepository.findById(employeeId)
-            .orElseThrow { RuntimeException(ErrorCode.EMPLOYEE_NOT_FOUND.name) }
+    fun upload(file: MultipartFile, userId: Long): AttachUploadResponse {
+        val employee = employeeRepository.findByIdAndDeletedFalse(userId)
+            ?: throw EmployeeNotFoundException()
+
+        val organization = employee.organization
+            ?: throw UserHasNoOrganizationException()
 
         if (file.isEmpty) {
-            throw RuntimeException("FILE_IS_EMPTY")
+            throw FileIsEmptyException()
         }
 
-        Files.createDirectories(uploadRoot)
-
-        val hash = calculateHash(file.bytes)
+        val hash = UUID.randomUUID()
 
         if (attachRepository.existsByHash(hash)) {
-            throw RuntimeException("FILE_ALREADY_EXISTS")
+            throw FileAlreadyExistsException()
         }
 
-        val storedName = UUID.randomUUID().toString()
-        val fullPath = uploadRoot.resolve(storedName)
+        val now = LocalDate.now()
+        val orgName = organization.name.replace(" ", "_")
+        val datePath = uploadRoot
+            .resolve(orgName)
+            .resolve(now.year.toString())
+            .resolve(String.format("%02d", now.monthValue))
+            .resolve(String.format("%02d", now.dayOfMonth))
+
+        Files.createDirectories(datePath)
+
+        val extension = file.originalFilename?.substringAfterLast('.', "docx") ?: "docx"
+        val storedName = "$hash.$extension"
+        val fullPath = datePath.resolve(storedName)
 
         Files.write(fullPath, file.bytes)
 
@@ -47,22 +59,43 @@ class AttachService(
             originName = file.originalFilename,
             size = file.size,
             type = file.contentType,
-            path = uploadRoot.toString(),
+            path = datePath.toString(),
             fullPath = fullPath.toString(),
             hash = hash,
-            employee = employee
+            status = DocStatus.TEMPLATE,
+            employee = employee,
+            organization = organization
         )
 
-        return attachRepository.save(attach).id!!
+        val savedAttach = attachRepository.save(attach)
+
+        val placeholderCount = placeHolderService.extractAndSavePlaceHolders(savedAttach)
+
+        return AttachUploadResponse(
+            id = savedAttach.id!!,
+            hash = savedAttach.hash,
+            originalName = savedAttach.originName,
+            placeholderCount = placeholderCount
+        )
     }
 
     fun get(id: Long): Attach =
-        attachRepository.findById(id)
-            .orElseThrow { RuntimeException("FILE_NOT_FOUND") }
+        attachRepository.findByIdAndDeletedFalse(id)
+            ?: throw AttachNotFoundException()
 
-    private fun calculateHash(bytes: ByteArray): String {
-        val digest = MessageDigest.getInstance("SHA-256")
-        return digest.digest(bytes)
-            .joinToString("") { "%02x".format(it) }
+    fun getByHash(hash: UUID): Attach =
+        attachRepository.findByHashAndDeletedFalse(hash)
+            ?: throw AttachNotFoundException()
+
+    fun getFileDto(id: Long): FileDto {
+        val attach = get(id)
+        return FileDto(
+            id = attach.id!!,
+            hash = attach.hash,
+            originalName = attach.originName,
+            size = attach.size,
+            type = attach.type,
+            path = attach.path
+        )
     }
 }

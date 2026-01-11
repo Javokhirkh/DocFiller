@@ -99,6 +99,14 @@ class FileReadException() : DocFillerAppException() {
     override fun errorType() = ErrorCode.FILE_READ_ERROR
 }
 
+class FileIsEmptyException() : DocFillerAppException() {
+    override fun errorType() = ErrorCode.FILE_IS_EMPTY
+}
+
+class FileAlreadyExistsException() : DocFillerAppException() {
+    override fun errorType() = ErrorCode.FILE_ALREADY_EXISTS
+}
+
 class OrganizationNameAlreadyExistsException() : DocFillerAppException() {
     override fun errorType() = ErrorCode.ORGANIZATION_ALREADY_EXISTS
 }
@@ -107,4 +115,20 @@ class PhoneNumberAlreadyExists() : DocFillerAppException() {
 }
 class OrganizationNotFoundException() : DocFillerAppException() {
     override fun errorType() = ErrorCode.ORGANIZATION_NOT_FOUND
+}
+
+class UserHasNoOrganizationException() : DocFillerAppException() {
+    override fun errorType() = ErrorCode.USER_HAS_NO_ORGANIZATION
+}
+
+class MissingPlaceholderValueException(val keys: Set<String>) : DocFillerAppException() {
+    override fun errorType() = ErrorCode.MISSING_PLACEHOLDER_VALUE
+}
+
+class UnknownPlaceholderKeyException(val keys: Set<String>) : DocFillerAppException() {
+    override fun errorType() = ErrorCode.UNKNOWN_PLACEHOLDER_KEY
+}
+
+class EmptyPlaceholderValueException(val keys: Set<String>) : DocFillerAppException() {
+    override fun errorType() = ErrorCode.EMPTY_PLACEHOLDER_VALUE
 }

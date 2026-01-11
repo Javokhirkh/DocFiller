@@ -1,79 +1,30 @@
 package org.example.docfiller
 
-import org.example.docfiller.dtos.*
-import org.example.docfiller.services.PlaceHolderService
-import org.springframework.http.HttpHeaders
-import org.springframework.http.MediaType
-import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
 import jakarta.validation.Valid
-import org.example.docfiller.dtos.LoginRequest
-import org.example.docfiller.dtos.LoginResponse
+import org.example.docfiller.dtos.*
 import org.example.docfiller.services.AttachService
 import org.example.docfiller.services.EmployeeService
 import org.example.docfiller.services.OrganizationService
-import org.springframework.core.io.UrlResource
+import org.example.docfiller.services.PlaceHolderService
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
-import java.nio.file.Paths
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api/placeholder")
 class PlaceHolderController(
     private val placeHolderService: PlaceHolderService
 ) {
-
-
     @GetMapping("/keys")
-    fun getPlaceHolderKeys(@RequestParam hash: String): ResponseEntity<PlaceHolderKeysResponse> {
-        val keys = placeHolderService.getPlaceHolderKeys(hash)
-        return ResponseEntity.ok(PlaceHolderKeysResponse(keys))
-    }
-
-
-    @GetMapping("/locations")
-    fun getPlaceHolderLocations(@RequestParam hash: String): ResponseEntity<List<PlaceHolderLocationResponse>> {
-        val locations = placeHolderService.getPlaceHolderLocations(hash)
-        return ResponseEntity.ok(locations)
-    }
-
+    fun getPlaceHolderKeys(@RequestParam hash: UUID) = placeHolderService.getPlaceHolderKeys(hash)
 
     @GetMapping("/statistics")
-    fun getStatistics(@RequestParam hash: String): ResponseEntity<ScanStatisticsResponse> {
-        val stats = placeHolderService.getStatistics(hash)
-        return ResponseEntity.ok(stats)
-    }
+    fun getStatistics(@RequestParam hash: UUID) = placeHolderService.getStatistics(hash)
 
 
     @PostMapping("/create-file")
-    fun createFile(@RequestBody request: CreateFileRequest): ResponseEntity<ByteArray> {
-        val fileBytes = placeHolderService.createFilledDocument(request)
-
-        val contentType = when (request.fileType) {
-            FileType.PDF -> MediaType.APPLICATION_PDF
-            FileType.DOCX -> MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-        }
-
-        val extension = when (request.fileType) {
-            FileType.PDF -> "pdf"
-            FileType.DOCX -> "docx"
-        }
-
-        val fileName = "${request.fileName}.$extension"
-
-        return ResponseEntity.ok()
-            .contentType(contentType)
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"$fileName\"")
-            .body(fileBytes)
-
-        // TODO: FileService.save() ni chaqirib file saqlash kerak
-
-    }
+    fun createFile(@RequestBody request: CreateFileRequest) = placeHolderService.createFilledDocument(request)
 }
 
 
@@ -118,23 +69,9 @@ class AttachController(
     @PostMapping("/upload")
     fun upload(
         @RequestParam file: MultipartFile,
-        @RequestParam employeeId: Long
-    ): ResponseEntity<Long> {
-        val id = attachService.upload(file, employeeId)
-        return ResponseEntity.ok(id)
-    }
+        @RequestParam userId: Long
+    ) = attachService.upload(file, userId)
 
     @GetMapping("/download/{id}")
-    fun download(@PathVariable id: Long): ResponseEntity<UrlResource> {
-        val attach = attachService.get(id)
-        val resource = UrlResource(Paths.get(attach.fullPath).toUri())
-
-        return ResponseEntity.ok()
-            .contentType(MediaType.parseMediaType(attach.type ?: "application/octet-stream"))
-            .header(
-                HttpHeaders.CONTENT_DISPOSITION,
-                "attachment; filename=\"${attach.originName}\""
-            )
-            .body(resource)
-    }
+    fun download(@PathVariable id: Long) = attachService.getFileDto(id)
 }
