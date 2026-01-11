@@ -46,7 +46,7 @@ class Employee(
     @Enumerated(EnumType.STRING)
     @Column(nullable = false) var role: UserRole,
     @ManyToOne(fetch = FetchType.LAZY)
-    val organization: Organization? = null,
+    var organization: Organization? = null,
 ) : BaseEntity()
 
 @Entity
