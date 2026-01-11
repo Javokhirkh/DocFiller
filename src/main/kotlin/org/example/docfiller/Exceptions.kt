@@ -98,3 +98,10 @@ class InvalidFileTypeException() : DocFillerAppException() {
 class FileReadException() : DocFillerAppException() {
     override fun errorType() = ErrorCode.FILE_READ_ERROR
 }
+
+class OrganizationNameAlreadyExistsException() : DocFillerAppException() {
+    override fun errorType() = ErrorCode.ORGANIZATION_ALREADY_EXISTS
+}
+class PhoneNumberAlreadyExists() : DocFillerAppException() {
+    override fun errorType() = ErrorCode.PHONE_NUMBER_ALREADY_EXISTS
+}
