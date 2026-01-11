@@ -6,6 +6,9 @@ import org.example.docfiller.services.AttachService
 import org.example.docfiller.services.EmployeeService
 import org.example.docfiller.services.OrganizationService
 import org.example.docfiller.services.PlaceHolderService
+import org.springframework.core.io.Resource
+import org.springframework.http.HttpHeaders
+import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
@@ -16,13 +19,16 @@ import java.util.UUID
 class PlaceHolderController(
     private val placeHolderService: PlaceHolderService
 ) {
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping("/keys")
     fun getPlaceHolderKeys(@RequestParam hash: UUID) = placeHolderService.getPlaceHolderKeys(hash)
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping("/statistics")
     fun getStatistics(@RequestParam hash: UUID) = placeHolderService.getStatistics(hash)
 
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PostMapping("/create-file")
     fun createFile(@RequestBody request: CreateFileRequest) = placeHolderService.createFilledDocument(request)
 }
@@ -66,12 +72,19 @@ class AttachController(
     private val attachService: AttachService
 ) {
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PostMapping("/upload")
     fun upload(
         @RequestParam file: MultipartFile,
         @RequestParam userId: Long
     ) = attachService.upload(file, userId)
-
-    @GetMapping("/download/{id}")
-    fun download(@PathVariable id: Long) = attachService.getFileDto(id)
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @GetMapping("/download/{hash}")
+    fun download(@PathVariable hash: UUID): ResponseEntity<Resource> {
+        val (resource, attach) = attachService.download(hash)
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${attach.originName}\"")
+            .header(HttpHeaders.CONTENT_TYPE, attach.type)
+            .body(resource)
+    }
 }

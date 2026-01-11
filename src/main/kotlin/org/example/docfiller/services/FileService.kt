@@ -3,6 +3,8 @@ package org.example.docfiller.services
 import org.example.docfiller.*
 import org.example.docfiller.dtos.AttachUploadResponse
 import org.example.docfiller.dtos.FileDto
+import org.springframework.core.io.Resource
+import org.springframework.core.io.UrlResource
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
@@ -87,8 +89,8 @@ class AttachService(
         attachRepository.findByHashAndDeletedFalse(hash)
             ?: throw AttachNotFoundException()
 
-    fun getFileDto(id: Long): FileDto {
-        val attach = get(id)
+    fun getFileDto(hash: UUID): FileDto {
+        val attach = getByHash(hash)
         return FileDto(
             id = attach.id!!,
             hash = attach.hash,
@@ -97,5 +99,15 @@ class AttachService(
             type = attach.type,
             path = attach.path
         )
+    }
+
+    fun download(hash: UUID): Pair<Resource, Attach> {
+        val attach = getByHash(hash)
+        val path = Paths.get(attach.fullPath)
+        if (!Files.exists(path)) {
+            throw FileReadException()
+        }
+        val resource = UrlResource(path.toUri())
+        return Pair(resource, attach)
     }
 }

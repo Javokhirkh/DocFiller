@@ -13,6 +13,8 @@ import java.io.FileInputStream
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import java.util.UUID
 
 interface PlaceHolderService {
@@ -328,7 +330,8 @@ class PlaceHolderServiceImpl(
             return
         }
 
-        val modifiedText = originalText.replace(placeholder, value)
+        val formattedValue = formatValue(placeholder, value)
+        val modifiedText = originalText.replace(placeholder, formattedValue)
 
         if (paragraph.runs.isNotEmpty()) {
             val firstRun = paragraph.runs[0]
@@ -342,5 +345,36 @@ class PlaceHolderServiceImpl(
             val run = paragraph.createRun()
             run.setText(modifiedText, 0)
         }
+    }
+
+    private fun formatValue(placeholder: String, value: String): String {
+        val key = placeholder.removePrefix("#").lowercase()
+
+        if (key.contains("date") || key.contains("sana")) {
+            return formatDate(value)
+        }
+
+        return value
+    }
+
+    private fun formatDate(value: String): String {
+        val inputPatterns = listOf(
+            "dd-MM-yyyy", "yyyy-MM-dd", "dd/MM/yyyy", "dd.MM.yyyy",
+            "dd-MM-yy", "yy-MM-dd", "dd/MM/yy", "dd.MM.yy",
+            "d-M-yyyy", "d-M-yy", "d/M/yyyy", "d/M/yy"
+        )
+        val outputFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy 'yil'", Locale("uz"))
+
+        for (pattern in inputPatterns) {
+            try {
+                val formatter = DateTimeFormatter.ofPattern(pattern)
+                val date = LocalDate.parse(value, formatter)
+                return date.format(outputFormatter)
+            } catch (e: Exception) {
+                continue
+            }
+        }
+
+        return value
     }
 }
