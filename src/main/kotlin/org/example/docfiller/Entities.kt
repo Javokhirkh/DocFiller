@@ -94,7 +94,7 @@ class PlaceHolder(
 
 @Entity
 class Organization(
-    @Column(nullable = false, unique = true)val name: String,
+    @Column(nullable = false, unique = true) var name: String,
     @Column(nullable = false) var phoneNumber: String,
     ) : BaseEntity(){
 }
