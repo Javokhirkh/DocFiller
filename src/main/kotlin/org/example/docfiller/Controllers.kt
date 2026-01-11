@@ -10,6 +10,8 @@ import jakarta.validation.Valid
 import org.example.docfiller.dtos.LoginRequest
 import org.example.docfiller.dtos.LoginResponse
 import org.example.docfiller.services.EmployeeService
+import org.example.docfiller.services.OrganizationService
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -79,5 +81,27 @@ class AuthController(
 
     @PostMapping("/login")
     fun login(@Valid @RequestBody request: LoginRequest): LoginResponse = employeeService.login(request)
+}
+
+@RestController
+@RequestMapping("/api/organization")
+class OrganizationController(
+    private val service: OrganizationService
+){
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("")
+    fun create(@RequestBody request: OrganizationCreate) = service.create(request)
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/{id}")
+    fun getOne(@PathVariable id: Long): OrganizationResponse = service.getOne(id)
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    fun update(@PathVariable id: Long, @RequestBody request: OrganizationUpdate) = service.update(id, request)
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}")
+    fun delete(@PathVariable id: Long) = service.delete(id)
 }
 
