@@ -70,6 +70,7 @@ class PlaceHolderController(
     }
 }
 
+
 @RestController
 @RequestMapping("/api/auth")
 class AuthController(
