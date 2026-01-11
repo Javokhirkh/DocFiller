@@ -3,9 +3,9 @@ spring:
     active: local
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/shop
+    url: jdbc:postgresql://localhost:5432/docfiller
     username: postgres
-    password: root
+    password: 1111
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     properties:

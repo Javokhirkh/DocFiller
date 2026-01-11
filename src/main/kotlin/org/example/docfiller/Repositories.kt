@@ -65,6 +65,8 @@ interface PlaceHolderRepository : BaseRepository<PlaceHolder> {
 @Repository
 interface AttachRepository : BaseRepository<Attach> {
     fun findByHashAndDeletedFalse(hash: String): Attach?
+
+    fun existsByHash(hash: String): Boolean
 }
 
 interface OrganizationRepository : BaseRepository<Organization>{

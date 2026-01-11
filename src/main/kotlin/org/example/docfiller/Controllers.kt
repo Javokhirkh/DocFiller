@@ -9,14 +9,18 @@ import org.springframework.web.bind.annotation.*
 import jakarta.validation.Valid
 import org.example.docfiller.dtos.LoginRequest
 import org.example.docfiller.dtos.LoginResponse
+import org.example.docfiller.services.AttachService
 import org.example.docfiller.services.EmployeeService
 import org.example.docfiller.services.OrganizationService
+import org.springframework.core.io.UrlResource
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.multipart.MultipartFile
+import java.nio.file.Paths
 
 @RestController
 @RequestMapping("/api/placeholder")
@@ -105,3 +109,32 @@ class OrganizationController(
     fun delete(@PathVariable id: Long) = service.delete(id)
 }
 
+@RestController
+@RequestMapping("/api/attach")
+class AttachController(
+    private val attachService: AttachService
+) {
+
+    @PostMapping("/upload")
+    fun upload(
+        @RequestParam file: MultipartFile,
+        @RequestParam employeeId: Long
+    ): ResponseEntity<Long> {
+        val id = attachService.upload(file, employeeId)
+        return ResponseEntity.ok(id)
+    }
+
+    @GetMapping("/download/{id}")
+    fun download(@PathVariable id: Long): ResponseEntity<UrlResource> {
+        val attach = attachService.get(id)
+        val resource = UrlResource(Paths.get(attach.fullPath).toUri())
+
+        return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType(attach.type ?: "application/octet-stream"))
+            .header(
+                HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=\"${attach.originName}\""
+            )
+            .body(resource)
+    }
+}
