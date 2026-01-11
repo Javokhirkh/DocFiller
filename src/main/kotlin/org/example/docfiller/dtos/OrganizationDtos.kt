@@ -22,3 +22,8 @@ data class OrganizationResponse(
     val phoneNumber: String,
     val createDate: LocalDateTime?,
 )
+
+data class OrganizationUpdate(
+    val name: String? = null,
+    val phoneNumber: String? = null,
+)
