@@ -36,6 +36,9 @@ class AuthController(
 
     @PostMapping("/login")
     fun login(@Valid @RequestBody request: LoginRequest): LoginResponse = employeeService.login(request)
+
+    @PostMapping("/register")
+    fun register(@Valid @RequestBody request: RegisterRequest) = employeeService.register(request)
 }
 
 @RestController
