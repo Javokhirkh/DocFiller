@@ -91,3 +91,25 @@ class AttachController(
             .body(resource)
     }
 }
+
+@RestController
+@RequestMapping("/employees")
+class EmployeeController(
+    private val service: EmployeeService
+){
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("")
+    fun create(@RequestBody request: EmployeeCreate) = service.create(request)
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/{id}")
+    fun getOne(@PathVariable id: Long): EmployeeResponse = service.getOne(id)
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    fun update(@PathVariable id: Long, @RequestBody request: EmployeeUpdate) = service.update(id, request)
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}")
+    fun delete(@PathVariable id: Long) = service.delete(id)
+}
