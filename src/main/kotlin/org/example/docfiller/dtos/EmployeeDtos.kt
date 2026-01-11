@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank
 data class LoginResponse(
     val accessToken: String,
     val refreshToken: String? = null,
+    val role: String? = null,
 )
 
 data class LoginRequest(

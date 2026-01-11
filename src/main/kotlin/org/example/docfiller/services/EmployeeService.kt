@@ -29,7 +29,7 @@ class EmployeeServiceImpl(
         }
 
         val token = jwtService.generateToken(user.phoneNumber, user.role.name)
-
-        return LoginResponse(token)
+        val role = jwtService.extractRole(token)
+        return LoginResponse(token, role = role)
     }
 }

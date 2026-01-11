@@ -48,7 +48,7 @@ class JwtService(
     }
 
     fun extractRole(token: String): String {
-        return extractAllClaims(token).get("role", String::class.java)
+        return extractAllClaims(token).get("roles", String::class.java)
     }
 
     fun isTokenValid(token: String): Boolean {
