@@ -19,6 +19,7 @@ enum class ErrorCode(val code: Int, val message: String) {
     FILE_READ_ERROR(203, "FILE_READ_ERROR"),
     //Organization
     ORGANIZATION_ALREADY_EXISTS(300, "ORGANIZATION_ALREADY_EXISTS"),
+    ORGANIZATION_NOT_FOUND(301, "ORGANIZATION_NOT_FOUND"),
 }
 
 enum class FileType {
