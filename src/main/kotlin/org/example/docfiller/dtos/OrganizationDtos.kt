@@ -3,7 +3,7 @@ package org.example.docfiller.dtos
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
-import org.jetbrains.annotations.NotNull
+import java.time.LocalDateTime
 
 data class OrganizationCreate(
     @field:NotBlank
@@ -14,4 +14,11 @@ data class OrganizationCreate(
         message = "phone.number.regex"
     )
     val phoneNumber: String,
+)
+
+data class OrganizationResponse(
+    val id: Long,
+    val name: String,
+    val phoneNumber: String,
+    val createDate: LocalDateTime?,
 )
