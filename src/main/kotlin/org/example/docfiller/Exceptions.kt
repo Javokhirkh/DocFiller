@@ -105,3 +105,6 @@ class OrganizationNameAlreadyExistsException() : DocFillerAppException() {
 class PhoneNumberAlreadyExists() : DocFillerAppException() {
     override fun errorType() = ErrorCode.PHONE_NUMBER_ALREADY_EXISTS
 }
+class OrganizationNotFoundException() : DocFillerAppException() {
+    override fun errorType() = ErrorCode.ORGANIZATION_NOT_FOUND
+}
