@@ -3,6 +3,7 @@ package org.example.docfiller.services
 import org.example.docfiller.*
 import org.example.docfiller.dtos.AttachUploadResponse
 import org.example.docfiller.dtos.FileDto
+import org.example.docfiller.security.SecurityUtils
 import org.springframework.core.io.Resource
 import org.springframework.core.io.UrlResource
 import org.springframework.stereotype.Service
@@ -18,14 +19,15 @@ import java.util.*
 class AttachService(
     private val attachRepository: AttachRepository,
     private val employeeRepository: EmployeeRepository,
-    private val placeHolderService: PlaceHolderService
+    private val placeHolderService: PlaceHolderService,
+    private val securityUtil: SecurityUtils,
 ) {
 
     private val uploadRoot: Path = Paths.get("uploads")
 
     @Transactional
-    fun upload(file: MultipartFile, userId: Long): AttachUploadResponse {
-        val employee = employeeRepository.findByIdAndDeletedFalse(userId)
+    fun upload(file: MultipartFile): AttachUploadResponse {
+        val employee = employeeRepository.findByIdAndDeletedFalse(securityUtil.getCurrentUserId())
             ?: throw EmployeeNotFoundException()
 
         val organization = employee.organization
