@@ -8,5 +8,5 @@ data class FileDto(
     val originalName: String?,
     val size: Long,
     val type: String?,
-    val path: String
+    val fullPath: String
 )

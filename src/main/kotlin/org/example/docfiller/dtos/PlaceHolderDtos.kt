@@ -3,16 +3,8 @@ package org.example.docfiller.dtos
 import org.example.docfiller.FileType
 import java.util.UUID
 
-data class GetPlaceHolderKeysRequest(
-    val attachHash: UUID
-)
-
-data class PlaceHolderKeysResponse(
-    val keys: List<String>
-)
 
 data class CreateFileRequest(
-    val userId: Long,
     val attachHash: UUID,
     val fileName: String,
     val fileType: FileType,

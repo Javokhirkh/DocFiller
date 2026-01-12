@@ -16,7 +16,7 @@ import java.time.LocalDate
 import java.util.*
 
 interface AttachService{
-    fun upload(file: MultipartFile): AttachUploadResponse
+    fun upload(file: MultipartFile)
     fun get(id: Long): Attach
     fun getByHash(hash: UUID): Attach
     fun getAllUserList(): List<FileDto>
@@ -33,7 +33,7 @@ class AttachServiceImpl(
     private val uploadRoot: Path = Paths.get("uploads")
 
     @Transactional
-    override fun upload(file: MultipartFile): AttachUploadResponse {
+    override fun upload(file: MultipartFile) {
         val employee = employeeRepository.findByIdAndDeletedFalse(securityUtil.getCurrentUserId())
             ?: throw EmployeeNotFoundException()
 
@@ -65,13 +65,13 @@ class AttachServiceImpl(
         val fullPath = datePath.resolve(storedName)
 
         Files.write(fullPath, file.bytes)
-
+        val urlForDownload = "http://localhost:8080/api/attach/download/$hash"
         val attach = Attach(
             originName = file.originalFilename,
             size = file.size,
             type = file.contentType,
-            path = datePath.toString(),
-            fullPath = fullPath.toString(),
+            path = fullPath.toString(),
+            fullPath = urlForDownload,
             hash = hash,
             status = DocStatus.TEMPLATE,
             employee = employee,
@@ -82,12 +82,6 @@ class AttachServiceImpl(
 
         val placeholderCount = placeHolderService.extractAndSavePlaceHolders(savedAttach)
 
-        return AttachUploadResponse(
-            id = savedAttach.id!!,
-            hash = savedAttach.hash,
-            originalName = savedAttach.originName,
-            placeholderCount = placeholderCount
-        )
     }
 
     override fun get(id: Long): Attach =
@@ -114,14 +108,14 @@ class AttachServiceImpl(
                 originalName = it.originName,
                 size = it.size,
                 type = it.type,
-                path= it.fullPath,
+                fullPath= it.fullPath,
             )
         }
     }
 
     override fun download(hash: UUID): Pair<Resource, Attach> {
         val attach = getByHash(hash)
-        val path = Paths.get(attach.fullPath)
+        val path = Paths.get(attach.path)
         if (!Files.exists(path)) {
             throw FileReadException()
         }
