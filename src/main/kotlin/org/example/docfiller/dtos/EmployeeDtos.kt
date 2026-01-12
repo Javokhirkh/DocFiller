@@ -16,6 +16,10 @@ data class LoginResponse(
 
 data class LoginRequest(
     @field:NotBlank
+    @field:Pattern(
+        regexp = "^\\+998(90|91|93|94|95|97|98|99|33|50|88)\\d{7}$",
+        message = "phone.number.regex"
+    )
     val phoneNumber: String,
     @field:NotBlank
     @field:Pattern(
