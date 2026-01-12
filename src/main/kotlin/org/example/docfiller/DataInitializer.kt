@@ -17,7 +17,7 @@ class DataInitializer(
     }
 
     private fun createAdminUserIfNotExists() {
-        val adminPhoneNumber = "admin"
+        val adminPhoneNumber = "+998990000102"
 
         if (employeeRepository.findByPhoneNumberAndDeletedFalse(adminPhoneNumber) != null) {
             return
@@ -36,7 +36,7 @@ class DataInitializer(
             firstName = "Admin",
             lastName = "User",
             phoneNumber = adminPhoneNumber,
-            password = passwordEncoder.encode("admin"),
+            password = passwordEncoder.encode("admin123"),
             role = UserRole.ROLE_ADMIN,
             organization = adminOrganization
         )
