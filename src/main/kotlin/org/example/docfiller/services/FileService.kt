@@ -1,7 +1,6 @@
 package org.example.docfiller.services
 
 import org.example.docfiller.*
-import org.example.docfiller.dtos.AttachUploadResponse
 import org.example.docfiller.dtos.FileDto
 import org.example.docfiller.security.SecurityUtils
 import org.springframework.core.io.Resource
@@ -19,7 +18,8 @@ interface AttachService{
     fun upload(file: MultipartFile)
     fun get(id: Long): Attach
     fun getByHash(hash: UUID): Attach
-    fun getAllUserList(): List<FileDto>
+    fun getAllUserTempleteList(): List<FileDto>
+    fun getAllUserReadyList(): List<FileDto>
     fun download(hash: UUID): Pair<Resource, Attach>
 }
 @Service
@@ -92,13 +92,34 @@ class AttachServiceImpl(
         attachRepository.findByHashAndDeletedFalse(hash)
             ?: throw AttachNotFoundException()
 
-    override fun getAllUserList(): List<FileDto>{
+    override fun getAllUserTempleteList(): List<FileDto>{
         val employee = employeeRepository.findByIdAndDeletedFalse(securityUtil.getCurrentUserId())
             ?: throw EmployeeNotFoundException()
 
         val attaches = attachRepository.findAllByEmployeeIdAndStatusAndDeletedFalse(
             employeeId = employee.id!!,
             status = DocStatus.TEMPLATE
+        )
+
+        return attaches.map {
+            FileDto(
+                id = it.id!!,
+                hash = it.hash,
+                originalName = it.originName,
+                size = it.size,
+                type = it.type,
+                fullPath= it.fullPath,
+            )
+        }
+    }
+
+    override fun getAllUserReadyList(): List<FileDto> {
+        val employee = employeeRepository.findByIdAndDeletedFalse(securityUtil.getCurrentUserId())
+            ?: throw EmployeeNotFoundException()
+
+        val attaches = attachRepository.findAllByEmployeeIdAndStatusAndDeletedFalse(
+            employeeId = employee.id!!,
+            status = DocStatus.READY
         )
 
         return attaches.map {

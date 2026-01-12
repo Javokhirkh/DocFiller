@@ -98,8 +98,13 @@ class AttachController(
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @GetMapping
-    fun getAllUserList() = attachService.getAllUserList()
+    @GetMapping("/templetes")
+    fun getAllUserList() = attachService.getAllUserTempleteList()
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @GetMapping("/readies")
+    fun getAllUserReadyList() = attachService.getAllUserReadyList()
+
 }
 
 @RestController
