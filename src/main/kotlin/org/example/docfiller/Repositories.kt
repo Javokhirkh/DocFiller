@@ -67,6 +67,7 @@ interface PlaceHolderRepository : BaseRepository<PlaceHolder> {
 interface AttachRepository : BaseRepository<Attach> {
     fun findByHashAndDeletedFalse(hash: UUID): Attach?
     fun existsByHash(hash: UUID): Boolean
+    fun findAllByEmployeeIdAndStatusAndDeletedFalse(employeeId: Long, status: DocStatus) : List<Attach>
 }
 
 interface OrganizationRepository : BaseRepository<Organization>{

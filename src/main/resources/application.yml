@@ -27,5 +27,5 @@ spring:
     init:
       mode: always
 jwt:
-  secret: "dG9rZW5zZWNyZXRrZXlmb3Jkb2NmaWxsZXJhcHBsaWNhdGlvbnRoYXRpc2F0bGVhc3Q2NGJ5dGVzbG9uZ2Zvckhhc2g1MTI="
+  secret: "your-key"
   expiration: 86400000

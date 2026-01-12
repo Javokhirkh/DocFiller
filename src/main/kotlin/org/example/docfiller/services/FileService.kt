@@ -15,18 +15,25 @@ import java.nio.file.Paths
 import java.time.LocalDate
 import java.util.*
 
+interface AttachService{
+    fun upload(file: MultipartFile): AttachUploadResponse
+    fun get(id: Long): Attach
+    fun getByHash(hash: UUID): Attach
+    fun getAllUserList(): List<FileDto>
+    fun download(hash: UUID): Pair<Resource, Attach>
+}
 @Service
-class AttachService(
+class AttachServiceImpl(
     private val attachRepository: AttachRepository,
     private val employeeRepository: EmployeeRepository,
     private val placeHolderService: PlaceHolderService,
     private val securityUtil: SecurityUtils,
-) {
+): AttachService {
 
     private val uploadRoot: Path = Paths.get("uploads")
 
     @Transactional
-    fun upload(file: MultipartFile): AttachUploadResponse {
+    override fun upload(file: MultipartFile): AttachUploadResponse {
         val employee = employeeRepository.findByIdAndDeletedFalse(securityUtil.getCurrentUserId())
             ?: throw EmployeeNotFoundException()
 
@@ -83,27 +90,36 @@ class AttachService(
         )
     }
 
-    fun get(id: Long): Attach =
+    override fun get(id: Long): Attach =
         attachRepository.findByIdAndDeletedFalse(id)
             ?: throw AttachNotFoundException()
 
-    fun getByHash(hash: UUID): Attach =
+    override fun getByHash(hash: UUID): Attach =
         attachRepository.findByHashAndDeletedFalse(hash)
             ?: throw AttachNotFoundException()
 
-    fun getFileDto(hash: UUID): FileDto {
-        val attach = getByHash(hash)
-        return FileDto(
-            id = attach.id!!,
-            hash = attach.hash,
-            originalName = attach.originName,
-            size = attach.size,
-            type = attach.type,
-            path = attach.path
+    override fun getAllUserList(): List<FileDto>{
+        val employee = employeeRepository.findByIdAndDeletedFalse(securityUtil.getCurrentUserId())
+            ?: throw EmployeeNotFoundException()
+
+        val attaches = attachRepository.findAllByEmployeeIdAndStatusAndDeletedFalse(
+            employeeId = employee.id!!,
+            status = DocStatus.TEMPLATE
         )
+
+        return attaches.map {
+            FileDto(
+                id = it.id!!,
+                hash = it.hash,
+                originalName = it.originName,
+                size = it.size,
+                type = it.type,
+                path= it.fullPath,
+            )
+        }
     }
 
-    fun download(hash: UUID): Pair<Resource, Attach> {
+    override fun download(hash: UUID): Pair<Resource, Attach> {
         val attach = getByHash(hash)
         val path = Paths.get(attach.fullPath)
         if (!Files.exists(path)) {

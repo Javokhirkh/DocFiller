@@ -96,6 +96,10 @@ class AttachController(
             .header(HttpHeaders.CONTENT_TYPE, attach.type)
             .body(resource)
     }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @GetMapping
+    fun getAllUserList() = attachService.getAllUserList()
 }
 
 @RestController
