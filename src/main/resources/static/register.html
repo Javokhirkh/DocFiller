@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ro'yxatdan o'tish</title>
+    <style>
+        /* --- DIZAYN (Login bilan bir xil uslubda) --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: #28a745; /* Yashil rang */
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
+        }
+
+        /* Validatsiya xatoligi uchun */
+        input:invalid {
+            border-color: #dc3545;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .login-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        #messageBox {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Ro'yxatdan o'tish</h2>
+
+    <form id="registerForm">
+
+        <div class="form-group">
+            <label>Ism <span style="color:red">*</span></label>
+            <input type="text" id="firstName" placeholder="Ismingiz" required minlength="4" maxlength="50">
+        </div>
+
+        <div class="form-group">
+            <label>Familiya</label>
+            <input type="text" id="lastName" placeholder="Familiyangiz" maxlength="50">
+        </div>
+
+        <div class="form-group">
+            <label>Telefon raqam <span style="color:red">*</span></label>
+            <input type="tel" id="phoneNumber" placeholder="+998901234567"
+                   value="+998"
+                   pattern="^\+998(90|91|93|94|95|97|98|99|33|50|88)\d{7}$"
+                   title="Format: +998901234567 (faqat O'zbekiston raqamlari)"
+                   required>
+        </div>
+
+        <div class="form-group">
+            <label>Tashkilot IDsi <span style="color:red">*</span></label>
+            <input type="number" id="organizationId" placeholder="ID raqami (Masalan: 1)" required>
+            <small style="color: #777; font-size: 12px;">Hozircha raqam kiriting</small>
+        </div>
+
+        <div class="form-group">
+            <label>Parol <span style="color:red">*</span></label>
+            <input type="password" id="password" placeholder="Parol o'ylab toping" required>
+        </div>
+
+        <button type="submit" id="submitBtn">Ro'yxatdan o'tish</button>
+    </form>
+
+    <div id="messageBox"></div>
+
+    <div class="login-link">
+        Akkauntingiz bormi? <a href="login.html">Kirish</a>
+    </div>
+</div>
+
+<script>
+    const form = document.getElementById('registerForm');
+    const msgBox = document.getElementById('messageBox');
+    const btn = document.getElementById('submitBtn');
+
+    // API manzili (Controllerga moslang)
+    const API_URL = "http://localhost:8080/api/auth/register";
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // 1. Ma'lumotlarni yig'ish
+        const firstName = document.getElementById('firstName').value;
+        const lastName = document.getElementById('lastName').value; // Bo'sh bo'lishi mumkin
+        const phoneNumber = document.getElementById('phoneNumber').value;
+        const password = document.getElementById('password').value;
+        const organizationId = document.getElementById('organizationId').value;
+
+        // 2. DTO ga mos Obyekt yasash
+        const requestData = {
+            firstName: firstName,
+            lastName: lastName ? lastName : null, // Bo'sh bo'lsa null yuboramiz
+            phoneNumber: phoneNumber,
+            password: password,
+            organizationId: parseInt(organizationId) // Stringdan Long (Int) ga o'tkazish
+        };
+
+        // UI ni bloklash
+        btn.disabled = true;
+        btn.innerText = "Yuborilmoqda...";
+        msgBox.style.display = 'none';
+
+        try {
+            // 3. Backendga POST so'rov
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            // 4. Javobni tekshirish
+            if (response.ok) {
+                // Muvaffaqiyatli!
+                showMessage("✅ Muvaffaqiyatli ro'yxatdan o'tdingiz! Loginga o'tilyapti...", "success");
+
+                // 2 sekunddan keyin Loginga otamiz
+                setTimeout(() => {
+                    window.location.href = "login.html";
+                }, 2000);
+            } else {
+                // Xatolik bo'lsa (masalan: raqam band)
+                /*let data = await response.json()
+                data = {code: "...", message: "..."}*/
+                const errorText = await response.text();
+                // Ba'zan backend JSON qaytaradi, shuni tekst qilib chiqaramiz
+                showMessage("❌ Xatolik: " + errorText, "error");
+                btn.disabled = false;
+                btn.innerText = "Ro'yxatdan o'tish";
+            }
+
+        } catch (error) {
+            console.error(error);
+            showMessage("❌ Server bilan bog'lanib bo'lmadi", "error");
+            btn.disabled = false;
+            btn.innerText = "Ro'yxatdan o'tish";
+        }
+    });
+
+    function showMessage(text, type) {
+        msgBox.innerText = text;
+        msgBox.className = type; // success yoki error
+        msgBox.style.display = 'block';
+    }
+</script>
+
+</body>
+</html>

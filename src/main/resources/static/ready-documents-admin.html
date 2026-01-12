@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tayyor Hujjatlar</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        /* --- STYLES --- */
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+
+        /* HEADER */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        h2 { color: #333; margin: 0; }
+
+        .back-btn {
+            text-decoration: none; color: #555; font-weight: bold;
+            border: 1px solid #ddd; padding: 8px 15px; border-radius: 5px;
+            background: white; transition: 0.3s;
+        }
+        .back-btn:hover { background: #eee; }
+
+        /* GRID LAYOUT */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        /* CARD STYLE */
+        .card {
+            background: white; padding: 20px; border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: center;
+            border: 1px solid #eee; transition: 0.3s;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+
+        .file-icon { font-size: 45px; margin-bottom: 15px; }
+        .word-icon { color: #2b5797; }
+        .pdf-icon { color: #dc3545; }
+
+        .file-name {
+            font-size: 16px; font-weight: 600; color: #333;
+            margin: 0 0 5px 0; word-break: break-all;
+        }
+
+        .file-size { font-size: 12px; color: #888; margin-bottom: 15px; }
+
+        /* DOWNLOAD BUTTON */
+        .download-btn {
+            background-color: #28a745; color: white; text-decoration: none;
+            padding: 10px 20px; border-radius: 6px; font-size: 14px;
+            width: 100%; box-sizing: border-box; font-weight: bold;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: 0.2s;
+        }
+
+        .download-btn:hover { background-color: #218838; }
+        .download-btn i { font-size: 14px; }
+
+        .empty-message {
+            text-align: center; width: 100%; grid-column: 1 / -1;
+            color: #777; font-size: 18px; margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>Mening Hujjatlarim</h2>
+        <a href="adminMenu.html" class="back-btn">← Menyuga qaytish</a>
+    </div>
+
+    <div id="filesGrid" class="grid">
+        <p style="text-align:center; width:100%">Yuklanmoqda...</p>
+    </div>
+</div>
+
+<script>
+    // --- CONFIG ---
+    const API_URL = "http://localhost:8080/api/attach/readies";
+    const grid = document.getElementById('filesGrid');
+    const token = localStorage.getItem('accessToken');
+
+    if (!token) window.location.href = "login.html";
+
+    // --- MAIN FUNCTION ---
+    async function loadReadyFiles() {
+        try {
+            const response = await fetch(API_URL, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) throw new Error("Hujjatlarni yuklab bo'lmadi");
+
+            const files = await response.json(); // List<FileDto>
+            renderFiles(files);
+
+        } catch (error) {
+            console.error(error);
+            grid.innerHTML = `<p style='color:red; text-align:center; width:100%'>Xatolik: Serverga ulanib bo'lmadi</p>`;
+        }
+    }
+
+    // --- RENDER FUNCTION ---
+    function renderFiles(files) {
+        grid.innerHTML = "";
+
+        if (!files || files.length === 0) {
+            grid.innerHTML = `
+                <div class="empty-message">
+                    <i class="fas fa-folder-open" style="font-size: 40px; margin-bottom:10px; display:block;"></i>
+                    Hozircha tayyor hujjatlar yo'q.
+                </div>
+            `;
+            return;
+        }
+
+        files.forEach(file => {
+            // 1. Fayl turiga qarab ikonka tanlash
+            const isPdf = file.originalName && file.originalName.toLowerCase().endsWith('.pdf');
+            const iconClass = isPdf ? 'fa-file-pdf pdf-icon' : 'fa-file-word word-icon';
+
+            // 2. Fayl hajmini chiroyli qilish (KB yoki MB)
+            const sizeStr = formatBytes(file.size);
+
+            // 3. Kartochka yaratish
+            const card = document.createElement('div');
+            card.className = 'card';
+
+            // DTO dagi 'fullPath' bu to'g'ridan-to'g'ri URL (http://localhost:8080/...)
+            // 'download' atributi brauzerga bu faylni ochmasdan, skachat qilishni aytadi
+            card.innerHTML = `
+                <i class="fas ${iconClass} file-icon"></i>
+                <h3 class="file-name">${file.originalName || 'Nomsiz hujjat'}</h3>
+                <p class="file-size">${sizeStr}</p>
+
+                <a href="${file.fullPath}" class="download-btn" download target="_blank">
+                    <i class="fas fa-download"></i> Yuklab olish
+                </a>
+            `;
+
+            grid.appendChild(card);
+        });
+    }
+
+    // --- HELPER: Bytes to KB/MB ---
+    function formatBytes(bytes, decimals = 2) {
+        if (!+bytes) return '0 Bytes';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+    }
+
+    // Sahifa ochilganda ishga tushir
+    loadReadyFiles();
+
+</script>
+
+</body>
+</html>

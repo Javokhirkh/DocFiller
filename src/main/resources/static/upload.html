@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fayl Yuklash</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h2 { text-align: center; color: #333; margin-bottom: 20px; }
+
+        .form-group { margin-bottom: 20px; }
+
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px dashed #007bff;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        #statusMessage {
+            margin-top: 15px;
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 15px;
+            text-decoration: none;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Fayl Yuklash</h2>
+
+    <form id="uploadForm">
+        <div class="form-group">
+            <label>Faylni tanlang:</label>
+            <input type="file" id="fileInput" required>
+        </div>
+
+        <button type="submit" id="uploadBtn">Yuklash</button>
+    </form>
+
+    <div id="statusMessage"></div>
+    <a href="dashboard.html" class="back-link">← Menyuga qaytish</a>
+</div>
+
+<script>
+    const form = document.getElementById('uploadForm');
+    const fileInput = document.getElementById('fileInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const msgBox = document.getElementById('statusMessage');
+
+    // 1. Tokenni tekshirish
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+        window.location.href = 'login.html';
+    }
+
+    const API_URL = "http://localhost:8080/api/attach/upload";
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        // 2. FormData faqat faylni oladi
+        const formData = new FormData();
+        formData.append("file", file);
+        // userId ni qo'shmaymiz!
+
+        uploadBtn.disabled = true;
+        uploadBtn.innerText = "Yuklanmoqda...";
+        msgBox.style.display = 'none';
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    // 3. Authorization Header: Tokenni shu yerda yuboramiz
+                    'Authorization': 'Bearer ' + token
+
+                    // Eslatma: 'Content-Type': 'multipart/form-data' ni YOZMANG!
+                    // Brauzer o'zi qo'yadi.
+                },
+                body: formData
+            });
+
+            if (response.ok) {
+                // Backend nima qaytarishiga qarab (String yoki JSON)
+                // Agar shunchaki ID qaytarsa text(), agar JSON bo'lsa json()
+                const result = await response.text();
+                showMessage("✅ Fayl muvaffaqiyatli yuklandi!", "success");
+                console.log("Server javobi:", result);
+                form.reset();
+            } else {
+                const errorText = await response.text();
+                showMessage("❌ Xatolik: " + errorText, "error");
+            }
+
+        } catch (error) {
+            console.error("Xato:", error);
+            showMessage("❌ Serverga ulanib bo'lmadi", "error");
+        } finally {
+            uploadBtn.disabled = false;
+            uploadBtn.innerText = "Yuklash";
+        }
+    });
+
+    function showMessage(text, type) {
+        msgBox.innerText = text;
+        msgBox.className = type;
+        msgBox.style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
