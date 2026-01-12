@@ -15,56 +15,66 @@ data class LoginResponse(
 )
 
 data class LoginRequest(
-    @field:NotBlank
+    @field:NotBlank(message = "{login.phoneNumber.notBlank}")
     @field:Pattern(
         regexp = "^\\+998(90|91|93|94|95|97|98|99|33|50|88)\\d{7}$",
-        message = "phone.number.regex"
+        message = "{phone.number.regex}"
     )
     val phoneNumber: String,
-    @field:NotBlank
-    @field:Size(min = 6, max = 50)
+
+    @field:NotBlank(message = "{login.password.notBlank}")
+    @field:Size(min = 6, max = 50, message = "{login.password.size}")
     val password: String
 )
 
 data class RegisterRequest(
-    @field:NotBlank
-    @field:Size(min = 4, max = 50)
+    @field:NotBlank(message = "{register.firstName.notBlank}")
+    @field:Size(min = 4, max = 50, message = "{register.firstName.size}")
     val firstName: String,
-    @field:Size(min = 1, max = 50)
+
+    @field:Size(min = 1, max = 50, message = "{register.lastName.size}")
     val lastName: String? = null,
-    @field:NotBlank
+
+    @field:NotBlank(message = "{register.phoneNumber.notBlank}")
     @field:Pattern(
         regexp = "^\\+998(90|91|93|94|95|97|98|99|33|50|88)\\d{7}$",
-        message = "phone.number.regex"
+        message = "{phone.number.regex}"
     )
     val phoneNumber: String,
-    @field:NotBlank
-    @field:Size(min = 6, max = 50)
+
+    @field:NotBlank(message = "{register.password.notBlank}")
+    @field:Size(min = 6, max = 50, message = "{register.password.size}")
     val password: String,
-    @field:NotNull
-    @field:Min(value = 1)
+
+    @field:NotNull(message = "{register.organizationId.notNull}")
+    @field:Min(value = 1, message = "{register.organizationId.min}")
     var organizationId: Long
 )
 
 data class EmployeeCreate(
-    @field:NotBlank
-    @field:Size(min = 4, max = 50)
+    @field:NotBlank(message = "{employee.firstName.notBlank}")
+    @field:Size(min = 4, max = 50, message = "{employee.firstName.size}")
     val firstName: String,
-    @field:Size(min = 1, max = 50)
+
+    @field:Size(min = 1, max = 50, message = "{employee.lastName.size}")
     val lastName: String? = null,
-    @field:NotBlank
+
+    @field:NotBlank(message = "{employee.phoneNumber.notBlank}")
     @field:Pattern(
         regexp = "^\\+998(90|91|93|94|95|97|98|99|33|50|88)\\d{7}$",
-        message = "phone.number.regex"
+        message = "{phone.number.regex}"
     )
     val phoneNumber: String,
-    @field:NotBlank
-    @field:Size(min = 6, max = 50)
+
+    @field:NotBlank(message = "{employee.password.notBlank}")
+    @field:Size(min = 6, max = 50, message = "{employee.password.size}")
     val password: String,
-    @field:NotBlank
+
+    @field:NotBlank(message = "{employee.role.notBlank}")
     val role: UserRole,
-    @field:Min(value = 1)
-    var organizationId: Long? = null,
+
+    @field:Min(value = 1, message = "{employee.organizationId.min}")
+    var organizationId: Long? = null
 )
 
 data class EmployeeResponse(

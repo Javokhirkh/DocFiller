@@ -1,33 +1,35 @@
 package org.example.docfiller.dtos
 
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Size
 import org.example.docfiller.FileType
 import java.util.UUID
 
 
 data class CreateFileRequest(
+
+    @field:NotNull(message = "{createFile.attachHash.notNull}")
     val attachHash: UUID,
+
+    @field:NotBlank(message = "{createFile.fileName.notBlank}")
+    @field:Size(
+        max = 255,
+        message = "{createFile.fileName.size}"
+    )
     val fileName: String,
+
+    @field:NotNull(message = "{createFile.fileType.notNull}")
     val fileType: FileType,
-    val placeholders: Map<String, String>
-)
 
-data class AttachUploadResponse(
-    val id: Long,
-    val hash: UUID,
-    val originalName: String?,
-    val placeholderCount: Int
-)
-
-data class PlaceHolderLocationResponse(
-    val id: Long?,
-    val key: String,
-    val locationType: String,
-    val headerIndex: Int?,
-    val paragraphIndex: Int?,
-    val tableIndex: Int?,
-    val rowIndex: Int?,
-    val columnIndex: Int?,
-    val footerIndex: Int?,
+    @field:NotEmpty(message = "{createFile.placeholders.notEmpty}")
+    val placeholders: Map<
+            @NotBlank(message = "{createFile.placeholders.key.notBlank}")
+            String,
+            @NotBlank(message = "{createFile.placeholders.value.notBlank}")
+            String
+            >
 )
 
 data class CreatedFileResponse(
