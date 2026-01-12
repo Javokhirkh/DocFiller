@@ -8,6 +8,7 @@ import org.example.docfiller.services.OrganizationService
 import org.example.docfiller.services.PlaceHolderService
 import org.springframework.core.io.Resource
 import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
@@ -84,8 +85,8 @@ class AttachController(
         consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun upload(
         @RequestParam file: MultipartFile,
-        @RequestParam userId: Long
-    ) = attachService.upload(file, userId)
+    ) = attachService.upload(file)
+
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping("/download/{hash}")
     fun download(@PathVariable hash: UUID): ResponseEntity<Resource> {
