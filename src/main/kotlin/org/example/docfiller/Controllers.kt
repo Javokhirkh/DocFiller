@@ -111,6 +111,10 @@ class EmployeeController(
     fun getOne(@PathVariable id: Long): EmployeeResponse = service.getOne(id)
 
     @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("")
+    fun getAll(): List<EmployeeResponse> = service.getAll()
+
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     fun update(@PathVariable id: Long, @RequestBody request: EmployeeUpdate) = service.update(id, request)
 
