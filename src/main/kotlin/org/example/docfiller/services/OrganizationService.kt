@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service
 interface OrganizationService{
     fun create(request: OrganizationCreate)
     fun getOne(id: Long): OrganizationResponse
+    fun getAll(): List<OrganizationResponse>
     fun update(id: Long, request: OrganizationUpdate)
     fun delete(id: Long)
 }
@@ -40,10 +41,25 @@ class OrganizationServiceImpl(
                 id = it.id!!,
                 name = it.name,
                 phoneNumber = it.phoneNumber,
-                createDate = it.createdDate
+                createDate = it.createdDate,
+                deleted = it.deleted
             )
         }
         throw OrganizationNotFoundException()
+    }
+
+    override fun getAll(): List<OrganizationResponse> {
+        val result = mutableListOf<OrganizationResponse>()
+        repository.findAll().forEach { organization ->
+            result.add(OrganizationResponse(
+                id = organization.id!!,
+                name = organization.name,
+                phoneNumber = organization.phoneNumber,
+                createDate = organization.createdDate,
+                deleted = organization.deleted
+            ))
+        }
+        return result
     }
 
     override fun update(id: Long, request: OrganizationUpdate) {
