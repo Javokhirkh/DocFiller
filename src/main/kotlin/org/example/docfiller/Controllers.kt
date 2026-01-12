@@ -48,7 +48,7 @@ class AuthController(
 }
 
 @RestController
-@RequestMapping("/api/organization")
+@RequestMapping("/api/organizations")
 class OrganizationController(
     private val service: OrganizationService
 ){
