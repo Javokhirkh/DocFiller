@@ -4,6 +4,7 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument
 import org.apache.poi.xwpf.usermodel.XWPFParagraph
 import org.example.docfiller.*
 import org.example.docfiller.dtos.*
+import org.example.docfiller.security.SecurityUtils
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.io.ByteArrayInputStream
@@ -31,7 +32,8 @@ class PlaceHolderServiceImpl(
     private val placeHolderRepository: PlaceHolderRepository,
     private val attachRepository: AttachRepository,
     private val employeeRepository: EmployeeRepository,
-    private val pdfConverterService: PdfConverterService
+    private val pdfConverterService: PdfConverterService,
+    private val securityUtils: SecurityUtils
 ) : PlaceHolderService {
 
     private val placeholderRegex = Regex("#\\w+")
@@ -39,7 +41,7 @@ class PlaceHolderServiceImpl(
 
     @Transactional
     override fun extractAndSavePlaceHolders(attach: Attach): Int {
-        val file = File(attach.fullPath)
+        val file = File(attach.path)
         if (!file.exists()) {
             throw FileReadException()
         }
@@ -182,7 +184,7 @@ class PlaceHolderServiceImpl(
 
     @Transactional
     override fun createFilledDocument(request: CreateFileRequest): CreatedFileResponse {
-        val employee = employeeRepository.findByIdAndDeletedFalse(request.userId)
+        val employee = employeeRepository.findByIdAndDeletedFalse(securityUtils.getCurrentUserId())
             ?: throw EmployeeNotFoundException()
 
         val organization = employee.organization
@@ -214,7 +216,7 @@ class PlaceHolderServiceImpl(
             throw EmptyPlaceholderValueException(emptyKeys)
         }
 
-        val file = File(templateAttach.fullPath)
+        val file = File(templateAttach.path)
         if (!file.exists()) {
             throw FileReadException()
         }
@@ -290,7 +292,7 @@ class PlaceHolderServiceImpl(
         val storedName = "$hash.$extension"
         val fullPath = datePath.resolve(storedName)
         Files.write(fullPath, outputBytes)
-
+        val urlForDonload= "http://localhost:8080/api/attach/download/$hash"
         val fileName = "${request.fileName}.$extension"
 
         val savedAttach = attachRepository.save(
@@ -298,8 +300,8 @@ class PlaceHolderServiceImpl(
                 originName = fileName,
                 size = outputBytes.size.toLong(),
                 type = contentType,
-                path = datePath.toString(),
-                fullPath = fullPath.toString(),
+                path = fullPath.toString(),
+                fullPath = urlForDonload,
                 hash = hash,
                 status = DocStatus.READY,
                 employee = employee,
@@ -313,7 +315,7 @@ class PlaceHolderServiceImpl(
             originalName = savedAttach.originName,
             size = savedAttach.size,
             type = savedAttach.type,
-            path = savedAttach.path
+            fullPath = savedAttach.fullPath
         )
 
         return CreatedFileResponse(
