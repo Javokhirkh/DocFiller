@@ -61,6 +61,10 @@ class OrganizationController(
     fun getOne(@PathVariable id: Long): OrganizationResponse = service.getOne(id)
 
     @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("")
+    fun getAll(): List<OrganizationResponse> = service.getAll()
+
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     fun update(@PathVariable id: Long, @RequestBody request: OrganizationUpdate) = service.update(id, request)
 
