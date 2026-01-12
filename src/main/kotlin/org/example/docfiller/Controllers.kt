@@ -80,7 +80,8 @@ class AttachController(
 ) {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @PostMapping("/upload")
+    @PostMapping("/upload",
+        consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun upload(
         @RequestParam file: MultipartFile,
         @RequestParam userId: Long
