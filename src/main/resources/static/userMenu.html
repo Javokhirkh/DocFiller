@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xodim Menyusi</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        /* --- STYLES --- */
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            background-color: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar h2 { margin: 0; color: #333; }
+
+        /* CHIQISH TUGMASI */
+        .logout-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+        }
+        .logout-btn:hover { background-color: #c82333; }
+
+        /* GRID MENU */
+        .container {
+            max-width: 900px; /* 3 ta bo'lgani uchun sal kengaytirdim */
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        .grid-menu {
+            display: grid;
+            /* Avtomatik moslashuvchan */
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 30px;
+        }
+
+        /* KARTALAR */
+        .menu-card {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            text-decoration: none;
+            color: #333;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%; /* Balandlikni bir xil qilish uchun */
+        }
+
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border-color: #007bff;
+        }
+
+        .menu-card i {
+            font-size: 40px;
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+
+        .menu-card h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .menu-card p {
+            margin: 10px 0 0;
+            color: #666;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <h2>Xodim Paneli</h2>
+    <button onclick="logout()" class="logout-btn">
+        <i class="fas fa-sign-out-alt"></i> Chiqish
+    </button>
+</div>
+
+<div class="container">
+    <div class="grid-menu">
+
+        <a href="upload.html" class="menu-card">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <h3>Shablon Yuklash</h3>
+            <p>Yangi Word (.docx) shablonni tizimga joylash</p>
+        </a>
+
+        <a href="templates.html" class="menu-card">
+            <i class="fas fa-file-contract"></i>
+            <h3>Shablon To'ldirish</h3>
+            <p>Mavjud shablon asosida hujjat yaratish</p>
+        </a>
+
+        <a href="ready-documents.html" class="menu-card">
+            <i class="fas fa-folder-open"></i>
+            <h3>Mening Hujjatlarim</h3>
+            <p>Tayyor hujjatlarni ko'rish va yuklash</p>
+        </a>
+
+    </div>
+</div>
+
+<script>
+    // --- XAVFSIZLIK ---
+    window.onload = function() {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+    };
+
+    // --- LOGOUT ---
+    function logout() {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        window.location.href = 'login.html';
+    }
+</script>
+
+</body>
+</html>

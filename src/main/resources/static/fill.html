@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Form Generator</title>
+    <style>
+        /* --- SODDA CSS DIZAYN --- */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            width: 350px;
+        }
+
+        h3 { margin-top: 0; text-align: center; color: #333; }
+
+        .form-group { margin-bottom: 15px; }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 14px;
+            color: #555;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; /* Input tashqariga chiqib ketmasligi uchun */
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover { background-color: #218838; }
+
+        /* JSON natijani ko'rsatish uchun (Test) */
+        pre {
+            background: #222;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            overflow-x: auto;
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h3>Hujjat To'ldirish</h3>
+
+    <div class="form-group">
+        <label>Shablonni tanlang:</label>
+        <select id="templateSelect">
+            <option value="" disabled selected>Tanlang...</option>
+            <option value="1">Mehnat Shartnomasi</option>
+            <option value="2">Ariza</option>
+        </select>
+    </div>
+
+    <form id="dynamicForm">
+        <div id="inputsContainer"></div>
+        <button type="submit" id="saveBtn" style="display: none;">Saqlash va Yaratish</button>
+    </form>
+
+    <pre id="outputJson"></pre>
+</div>
+
+<script>
+    // --- ELEMENTLARNI OLAMIZ ---
+    const select = document.getElementById('templateSelect');
+    const container = document.getElementById('inputsContainer');
+    const saveBtn = document.getElementById('saveBtn');
+    const form = document.getElementById('dynamicForm');
+    const output = document.getElementById('outputJson');
+
+    // --- 1. MOCK DATA (Backenddan keladigan List<String>) ---
+    // Backend aslida shunday javob qaytaradi: ["##ism", "##familiya"]
+    const backendResponseMock = {
+        "1": ["##ism", "##familiya", "##lavozim", "##maosh"],
+        "2": ["##rahbar_ismi", "##sabab", "##sana"]
+    };
+
+    // --- 2. TANLAGANDA INPUTLARNI CHIZISH ---
+    select.addEventListener('change', function() {
+        const id = this.value;
+        container.innerHTML = ''; // Eskilarini tozalash
+        output.style.display = 'none';
+
+        // Backenddan Listni olamiz (Hozircha mock)
+        const keysList = backendResponseMock[id];
+
+        // Agar list bo'sh bo'lmasa, aylanamiz
+        if (keysList && keysList.length > 0) {
+
+            keysList.forEach(key => {
+                // 1. Label uchun chiroyli nom yasaymiz (##ism -> Ism)
+                const labelText = key.replace('##', '').toUpperCase();
+
+                // 2. HTML tuzamiz
+                const div = document.createElement('div');
+                div.className = 'form-group';
+
+                div.innerHTML = `
+                    <label>${labelText}</label>
+                    <input type="text" name="${key}" placeholder="${labelText}ni kiriting" required>
+                `;
+
+                container.appendChild(div);
+            });
+
+            saveBtn.style.display = 'block'; // Tugmani yoqamiz
+        }
+    });
+
+    // --- 3. JONATISH (Form Submit) ---
+    form.addEventListener('submit', function(e) {
+        e.preventDefault(); // Sahifa yangilanmasligi uchun
+
+        // Formadagi barcha inputlarni yig'ib olamiz
+        const formData = new FormData(form);
+        const dataMap = {};
+
+        // FormData ichini aylanamiz
+        // value = User yozgan so'z (Masalan: "Sanjar")
+        // key   = Input name (Masalan: "##ism")
+        formData.forEach((value, key) => {
+            dataMap[key] = value;
+        });
+
+        // Backendga ketadigan tayyor obyekt (DTO)
+        const requestDto = {
+            templateId: select.value, // Hujjat IDsi
+            data: dataMap             // Key-Value map
+        };
+
+        // Ekranga chiqarish (Test uchun)
+        output.textContent = JSON.stringify(requestDto, null, 4);
+        output.style.display = 'block';
+
+        console.log("Backendga ketayotgan JSON:", requestDto);
+
+        // --- FETCH (Backendga yuborish kodi) ---
+        fetch('http://localhost:8080/api/documents/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestDto)
+        })
+        .then(res => res.blob()) // Fayl qaytsa blob qilib olamiz
+        .then(blob => {
+            // Faylni skachat qilish logikasi...
+        });
+    });
+
+</script>
+
+</body>
+</html>

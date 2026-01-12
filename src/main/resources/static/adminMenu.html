@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asosiy Menyu</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        /* --- UMUMIY STIL --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- HEADER (Tepa qism) --- */
+        .navbar {
+            background-color: #ffffff;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between; /* Ikki chetga surish */
+            align-items: center;
+        }
+
+        .navbar h2 {
+            margin: 0;
+            color: #333;
+        }
+
+        .logout-btn {
+            background-color: #dc3545; /* Qizil rang */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logout-btn:hover {
+            background-color: #c82333;
+        }
+
+        /* --- BUTTONLAR KONTEYNERI --- */
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .grid-menu {
+            display: grid;
+            /* Avtomatik moslashuvchan ustunlar (kamida 200px) */
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        /* --- BUTTON KARTOCHKALARI --- */
+        .menu-card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #eee;
+            text-decoration: none; /* Link chizig'ini olib tashlash */
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 120px; /* Bir xil balandlik */
+        }
+
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            border-color: #007bff;
+        }
+
+        .menu-card i {
+            font-size: 32px;
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+
+        .menu-card h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <h2>Document System</h2>
+    <button onclick="logout()" class="logout-btn">
+        <i class="fas fa-sign-out-alt"></i> Chiqish
+    </button>
+</div>
+
+<div class="container">
+    <div class="grid-menu">
+
+        <a href="upload.html" class="menu-card">
+            <i class="fas fa-file-upload"></i>
+            <h3>Shablon Yuklash</h3>
+        </a>
+
+        <a href="templates.html" class="menu-card">
+            <i class="fas fa-file-contract"></i>
+            <h3>Shartnoma Yaratish</h3>
+        </a>
+
+        <a href="users.html" class="menu-card">
+            <i class="fas fa-users"></i>
+            <h3>Foydalanuvchilar</h3>
+        </a>
+
+        <a href="organization.html" class="menu-card">
+            <i class="fas fa-building"></i>
+            <h3>Korxonalar</h3>
+        </a>
+
+        <a href="ready-documents-admin.html" class="menu-card">
+            <i class="fas fa-folder-open"></i>
+            <h3>Tayyor hujjatlarni ko'rish va yuklash</h3>
+        </a>
+
+        <div class="menu-card" onclick="alert('Hozircha ishlamaydi')">
+            <i class="fas fa-folder"></i>
+            <h3>Button 6</h3>
+        </div>
+
+        <div class="menu-card">
+            <i class="fas fa-chart-line"></i>
+            <h3>Button 7</h3>
+        </div>
+
+        <div class="menu-card">
+            <i class="fas fa-envelope"></i>
+            <h3>Button 8</h3>
+        </div>
+
+        <div class="menu-card">
+            <i class="fas fa-bell"></i>
+            <h3>Button 9</h3>
+        </div>
+
+        <div class="menu-card">
+            <i class="fas fa-info-circle"></i>
+            <h3>Button 10</h3>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // --- SAHIFA YUKLANGANDA TEKSHIRISH ---
+    window.onload = function() {
+        const token = localStorage.getItem('accessToken');
+
+        // Agar token yo'q bo'lsa, Login sahifasiga haydash
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+    };
+
+    // --- LOGOUT FUNKSIYASI ---
+    function logout() {
+        // 1. Xotirani tozalash
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+
+        // 2. Login sahifasiga yo'naltirish
+        window.location.href = 'login.html';
+    }
+</script>
+
+</body>
+</html>

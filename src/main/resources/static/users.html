@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xodimlar Boshqaruvi</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        /* --- GENERAL STYLES --- */
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* --- HEADER --- */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header h2 { color: #333; margin: 0; }
+
+        .add-btn {
+            background-color: #28a745; color: white; padding: 10px 20px;
+            border: none; border-radius: 5px; cursor: pointer; font-weight: bold;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .add-btn:hover { background-color: #218838; }
+
+        /* --- TABLE --- */
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; color: #555; font-weight: 600; }
+
+        /* O'CHIRILGAN USER STILI (MUHIM) */
+        .deleted-row {
+            background-color: #fcfcfc;
+            color: #aaa;
+            opacity: 0.6;
+            pointer-events: none; /* Bosib bo'lmaydi */
+        }
+        .deleted-badge {
+            background-color: #dc3545; color: white; padding: 2px 8px;
+            border-radius: 10px; font-size: 11px;
+        }
+
+        /* --- ACTION BUTTONS --- */
+        .action-btn {
+            border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px; color: white;
+        }
+        .edit-btn { background-color: #ffc107; color: #333; }
+        .delete-btn { background-color: #dc3545; }
+
+        .action-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        /* --- MODAL (POPUP) --- */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; padding: 25px; border-radius: 8px; width: 400px; position: relative;
+        }
+        .close { position: absolute; right: 20px; top: 15px; font-size: 24px; cursor: pointer; }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+
+        .save-btn { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>Xodimlar Ro'yxati</h2>
+        <button class="add-btn" onclick="openCreateModal()">
+            <i class="fas fa-plus"></i> Yangi Xodim
+        </button>
+    </div>
+
+    <div class="card">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>F.I.O</th>
+                <th>Telefon</th>
+                <th>Org ID</th>
+                <th>Holati</th>
+                <th>Amallar</th>
+            </tr>
+            </thead>
+            <tbody id="userTableBody">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="userModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h3 id="modalTitle">Yangi Xodim Qo'shish</h3>
+
+        <form id="userForm">
+            <input type="hidden" id="userId"> <div class="form-group">
+            <label>Ism *</label>
+            <input type="text" id="firstName" required minlength="4">
+        </div>
+
+            <div class="form-group">
+                <label>Familiya</label>
+                <input type="text" id="lastName">
+            </div>
+
+            <div class="form-group">
+                <label>Telefon *</label>
+                <input type="tel" id="phoneNumber" value="+998" pattern="^\+998\d{9}$" title="+998901234567" required>
+            </div>
+
+            <div class="form-group" id="passwordGroup">
+                <label>Parol *</label>
+                <input type="password" id="password" minlength="6">
+            </div>
+
+            <div class="form-group" id="roleGroup">
+                <label>Rol *</label>
+                <select id="role">
+                    <option value="ROLE_USER">Xodim (USER)</option>
+                    <option value="ROLE_ADMIN">Admin</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Tashkilot ID</label>
+                <input type="number" id="organizationId" min="1">
+            </div>
+
+            <button type="submit" class="save-btn">Saqlash</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // --- API CONFIG ---
+    const API_URL = "http://localhost:8080/api/employees";
+    const token = localStorage.getItem('accessToken');
+
+    // Auth Check
+    if (!token) window.location.href = "login.html";
+
+    // --- DOM ELEMENTS ---
+    const tableBody = document.getElementById('userTableBody');
+    const modal = document.getElementById('userModal');
+    const form = document.getElementById('userForm');
+    const modalTitle = document.getElementById('modalTitle');
+
+    // DTO farqi uchun inputlarni guruhlash
+    const passwordGroup = document.getElementById('passwordGroup');
+    const roleGroup = document.getElementById('roleGroup');
+
+    // 1. RO'YXATNI YUKLASH (READ)
+    async function loadUsers() {
+        try {
+            const response = await fetch(API_URL, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (!response.ok) throw new Error("Yuklashda xatolik");
+
+            const users = await response.json(); // List<EmployeeResponse>
+            renderTable(users);
+
+        } catch (error) {
+            console.error(error);
+            alert("Ma'lumotlarni yuklab bo'lmadi");
+        }
+    }
+
+    // Jadvalni chizish
+    function renderTable(users) {
+        tableBody.innerHTML = "";
+
+        users.forEach(user => {
+            // DELETED LOGIKASI:
+            // Agar user.deleted = true bo'lsa, 'deleted-row' klassini qo'shamiz
+            const rowClass = user.deleted ? 'deleted-row' : '';
+            const statusHtml = user.deleted
+                ? '<span class="deleted-badge">O\'chirilgan</span>'
+                : '<span style="color:green">Faol</span>';
+
+            // Tugmalarni o'chirib qo'yish (agar deleted bo'lsa)
+            const disabledAttr = user.deleted ? 'disabled' : '';
+
+            const row = `
+                <tr class="${rowClass}">
+                    <td>${user.id}</td>
+                    <td>${user.firstName} ${user.lastName || ''}</td>
+                    <td>${user.phoneNumber}</td>
+                    <td>${user.organizationId || '-'}</td>
+                    <td>${statusHtml}</td>
+                    <td>
+                        <button class="action-btn edit-btn" ${disabledAttr}
+                            onclick="openEditModal('${user.id}', '${user.firstName}', '${user.lastName || ''}', '${user.phoneNumber}', '${user.organizationId || ''}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+
+                        <button class="action-btn delete-btn" ${disabledAttr}
+                            onclick="deleteUser(${user.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        });
+    }
+
+    // 2. CREATE MODAL OCHISH
+    window.openCreateModal = function() {
+        form.reset();
+        document.getElementById('userId').value = ""; // ID yo'q degani bu yangi user
+        modalTitle.innerText = "Yangi Xodim Qo'shish";
+
+        // Create da Parol va Rol kerak
+        passwordGroup.style.display = "block";
+        roleGroup.style.display = "block";
+        document.getElementById('password').required = true;
+
+        modal.style.display = "flex";
+    }
+
+    // 3. EDIT MODAL OCHISH
+    window.openEditModal = function(id, fName, lName, phone, orgId) {
+        document.getElementById('userId').value = id;
+        document.getElementById('firstName').value = fName;
+        document.getElementById('lastName').value = lName;
+        document.getElementById('phoneNumber').value = phone;
+        document.getElementById('organizationId').value = orgId;
+
+        modalTitle.innerText = "Xodimni Tahrirlash";
+
+        // Update DTO da Parol va Rol yo'q, shuning uchun yashiramiz
+        passwordGroup.style.display = "none";
+        roleGroup.style.display = "none";
+        document.getElementById('password').required = false;
+
+        modal.style.display = "flex";
+    }
+
+    window.closeModal = function() {
+        modal.style.display = "none";
+    }
+
+    // 4. FORM SUBMIT (CREATE OR UPDATE)
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const id = document.getElementById('userId').value;
+        const isUpdate = !!id; // Agar ID bor bo'lsa, bu Update
+
+        const rawOrgId = document.getElementById('organizationId').value;
+        const orgIdVal = rawOrgId ? parseInt(rawOrgId) : null;
+
+        let url = API_URL;
+        let method = 'POST';
+        let bodyData = {};
+
+        if (isUpdate) {
+            // --- UPDATE (EmployeeUpdate DTO) ---
+            url = `${API_URL}/${id}`;
+            method = 'PUT'; // Yoki PATCH
+            bodyData = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value || null,
+                phoneNumber: document.getElementById('phoneNumber').value,
+                organizationId: orgIdVal
+                // Parol va Rol jo'natilmaydi!
+            };
+        } else {
+            // --- CREATE (EmployeeCreate DTO) ---
+            method = 'POST';
+            bodyData = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value || null,
+                phoneNumber: document.getElementById('phoneNumber').value,
+                password: document.getElementById('password').value,
+                role: document.getElementById('role').value,
+                organizationId: orgIdVal
+            };
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(bodyData)
+            });
+
+            if (response.ok) {
+                alert(isUpdate ? "Yangilandi!" : "Yaratildi!");
+                closeModal();
+                loadUsers(); // Jadvalni yangilash
+            } else {
+                const err = await response.text();
+                alert("Xatolik: " + err);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    });
+
+    // 5. DELETE FUNCTION
+    window.deleteUser = async function(id) {
+        console.log(id)
+        if (!confirm("Rostdan ham bu xodimni o'chirmoqchimisiz?")) return;
+
+        try {
+            const response = await fetch(`${API_URL}/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (response.ok) {
+                loadUsers(); // Jadvalni yangilash
+            } else {
+                alert("O'chirishda xatolik");
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    // Sahifa ochilganda yuklash
+    loadUsers();
+
+</script>
+
+</body>
+</html>

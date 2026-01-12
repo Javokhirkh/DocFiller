@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tashkilotlar Boshqaruvi</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        /* --- GENERAL STYLES (User page bilan bir xil) --- */
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* HEADER */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header h2 { color: #333; margin: 0; }
+
+        .add-btn {
+            background-color: #28a745; color: white; padding: 10px 20px;
+            border: none; border-radius: 5px; cursor: pointer; font-weight: bold;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .add-btn:hover { background-color: #218838; }
+
+        /* TABLE */
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; color: #555; font-weight: 600; }
+
+        /* O'CHIRILGAN QATOR STILI */
+        .deleted-row {
+            background-color: #fcfcfc;
+            color: #aaa;
+            opacity: 0.6;
+            pointer-events: none; /* Bosib bo'lmaydi */
+        }
+        .deleted-badge {
+            background-color: #dc3545; color: white; padding: 2px 8px;
+            border-radius: 10px; font-size: 11px;
+        }
+
+        /* ACTIONS */
+        .action-btn {
+            border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px; color: white;
+        }
+        .edit-btn { background-color: #ffc107; color: #333; }
+        .delete-btn { background-color: #dc3545; }
+        .action-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        /* MODAL */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; padding: 25px; border-radius: 8px; width: 400px; position: relative;
+        }
+        .close { position: absolute; right: 20px; top: 15px; font-size: 24px; cursor: pointer; }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+
+        .save-btn { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>Tashkilotlar</h2>
+        <button class="add-btn" onclick="openCreateModal()">
+            <i class="fas fa-plus"></i> Yangi Tashkilot
+        </button>
+    </div>
+
+    <div class="card">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nomi</th>
+                <th>Telefon</th>
+                <th>Yaratilgan sana</th>
+                <th>Holati</th>
+                <th>Amallar</th>
+            </tr>
+            </thead>
+            <tbody id="orgTableBody">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="orgModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h3 id="modalTitle">Tashkilot Qo'shish</h3>
+
+        <form id="orgForm">
+            <input type="hidden" id="orgId">
+
+            <div class="form-group">
+                <label>Nomi *</label>
+                <input type="text" id="orgName" required minlength="3" maxlength="100" placeholder="MCHJ nomi...">
+            </div>
+
+            <div class="form-group">
+                <label>Telefon raqam *</label>
+                <input type="tel" id="orgPhone" required
+                       value="+998"
+                       pattern="^\+998(90|91|93|94|95|97|98|99|33|50|88)\d{7}$"
+                       title="Format: +998901234567">
+            </div>
+
+            <button type="submit" class="save-btn">Saqlash</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // --- API CONFIG ---
+    // Controller manzili (o'zingiznikiga moslang)
+    const API_URL = "http://localhost:8080/api/organizations";
+    const token = localStorage.getItem('accessToken');
+
+    if (!token) window.location.href = "login.html";
+
+    // --- DOM ELEMENTS ---
+    const tableBody = document.getElementById('orgTableBody');
+    const modal = document.getElementById('orgModal');
+    const form = document.getElementById('orgForm');
+    const modalTitle = document.getElementById('modalTitle');
+
+    // 1. RO'YXATNI YUKLASH (READ)
+    async function loadOrgs() {
+        try {
+            const response = await fetch(API_URL, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (!response.ok) throw new Error("Yuklash xatosi");
+            const orgs = await response.json(); // List<OrganizationResponse>
+            renderTable(orgs);
+        } catch (e) {
+            console.error(e);
+            alert("Tashkilotlarni yuklab bo'lmadi");
+        }
+    }
+
+    // 2. JADVAL CHIZISH
+    function renderTable(orgs) {
+        tableBody.innerHTML = "";
+
+        orgs.forEach(org => {
+            // Deleted mantiq (Xira qilish)
+            const rowClass = org.deleted ? 'deleted-row' : '';
+            const statusHtml = org.deleted
+                ? '<span class="deleted-badge">O\'chirilgan</span>'
+                : '<span style="color:green; font-weight:bold;">Faol</span>';
+
+            const disabledAttr = org.deleted ? 'disabled' : '';
+
+            // Sanani chiroyli qilish (2025-01-09T10:00 -> 09.01.2025 10:00)
+            const formattedDate = formatDate(org.createDate);
+
+            const row = `
+                <tr class="${rowClass}">
+                    <td>${org.id}</td>
+                    <td><strong>${org.name}</strong></td>
+                    <td>${org.phoneNumber}</td>
+                    <td>${formattedDate}</td>
+                    <td>${statusHtml}</td>
+                    <td>
+                        <button class="action-btn edit-btn" ${disabledAttr}
+                            onclick="openEditModal('${org.id}', '${org.name}', '${org.phoneNumber}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete-btn" ${disabledAttr}
+                            onclick="deleteOrg(${org.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        });
+    }
+
+    // Yordamchi: Sanani formatlash
+    function formatDate(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit' });
+    }
+
+    // 3. CREATE MODAL
+    window.openCreateModal = function() {
+        form.reset();
+        document.getElementById('orgId').value = ""; // ID yo'q = Yangi
+        modalTitle.innerText = "Tashkilot Qo'shish";
+        modal.style.display = "flex";
+    }
+
+    // 4. EDIT MODAL
+    window.openEditModal = function(id, name, phone) {
+        document.getElementById('orgId').value = id;
+        document.getElementById('orgName').value = name;
+        document.getElementById('orgPhone').value = phone;
+
+        modalTitle.innerText = "Tashkilotni Tahrirlash";
+        modal.style.display = "flex";
+    }
+
+    window.closeModal = function() {
+        modal.style.display = "none";
+    }
+
+    // 5. SAVE (CREATE / UPDATE)
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const id = document.getElementById('orgId').value;
+        const isUpdate = !!id;
+
+        // Ma'lumotlarni yig'ish
+        const requestBody = {
+            name: document.getElementById('orgName').value,
+            phoneNumber: document.getElementById('orgPhone').value
+        };
+
+        let url = API_URL;
+        let method = 'POST';
+
+        if (isUpdate) {
+            url = `${API_URL}/${id}`;
+            method = 'PUT'; // OrganizationUpdate DTO ishlaydi
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (response.ok) {
+                alert(isUpdate ? "Yangilandi!" : "Yaratildi!");
+                closeModal();
+                loadOrgs();
+            } else {
+                const err = await response.text();
+                alert("Xatolik: " + err);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Server xatosi");
+        }
+    });
+
+    // 6. DELETE
+    window.deleteOrg = async function(id) {
+        if (!confirm("Bu tashkilotni o'chirmoqchimisiz?")) return;
+
+        try {
+            const response = await fetch(`${API_URL}/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (response.ok) {
+                loadOrgs();
+            } else {
+                alert("O'chirishda xatolik");
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    // Boshlanishida yuklash
+    loadOrgs();
+
+</script>
+
+</body>
+</html>

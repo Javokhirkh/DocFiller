@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shablonlar</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        h2 { text-align: center; color: #333; margin-bottom: 30px; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white; padding: 20px; border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: center;
+            cursor: pointer; transition: 0.3s; border: 1px solid #eee;
+            text-decoration: none; color: #333; display: block;
+        }
+
+        .card:hover { transform: translateY(-5px); border-color: #007bff; }
+        .card i { font-size: 40px; color: #2b5797; margin-bottom: 15px; } /* Word rangi */
+        .card h3 { font-size: 16px; margin: 0; word-break: break-all; }
+        .card p { font-size: 12px; color: #777; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Mavjud Shablonlar</h2>
+    <div id="templateGrid" class="grid">
+    </div>
+</div>
+
+<script>
+    const API_URL = "http://localhost:8080/api/attach/templetes";
+    const grid = document.getElementById('templateGrid');
+    const token = localStorage.getItem('accessToken');
+
+    if (!token) window.location.href = "login.html";
+
+    async function loadTemplates() {
+        try {
+            const response = await fetch(API_URL, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (!response.ok) throw new Error("Shablonlarni yuklab bo'lmadi");
+
+            const files = await response.json(); // List<FileDto>
+
+            grid.innerHTML = "";
+            files.forEach(file => {
+                // Faqat Word fayllarni ko'rsatish maqsadga muvofiq, lekin hammasini chiqaramiz
+                const icon = file.originalName.endsWith('.pdf') ? 'fa-file-pdf' : 'fa-file-word';
+                const color = file.originalName.endsWith('.pdf') ? '#dc3545' : '#2b5797';
+                console.log(file.hash)
+                const card = document.createElement('a');
+                card.className = 'card';
+                // BOSILGANDA: generate.html ga HASH ni olib o'tamiz
+                card.href = `generate.html?hash=${file.hash}`;
+
+                card.innerHTML = `
+                    <i class="fas ${icon}" style="color: ${color}"></i>
+                    <h3>${file.originalName}</h3>
+                    <p>${(file.size / 1024).toFixed(1)} KB</p>
+                `;
+                grid.appendChild(card);
+            });
+
+        } catch (error) {
+            console.error(error);
+            grid.innerHTML = "<p style='text-align:center; width:100%'>Xatolik yuz berdi</p>";
+        }
+    }
+
+    loadTemplates();
+</script>
+
+</body>
+</html>

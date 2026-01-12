@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tizimga kirish</title>
+    <style>
+        /* --- CSS DIZAYN --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-card h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .message {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error { color: #dc3545; }
+        .success { color: #28a745; }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <h2>Tizimga Kirish</h2>
+
+    <form id="loginForm">
+        <div class="form-group">
+            <label for="phone">Telefon raqam</label>
+            <input type="tel" id="phone" placeholder="+998901234567" required>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Parol</label>
+            <input type="password" id="password" placeholder="Parolingizni kiriting" required>
+        </div>
+
+        <button type="submit" id="loginBtn">Kirish</button>
+    </form>
+
+    <div id="messageBox" class="message"></div>
+</div>
+
+<script>
+    // --- JAVASCRIPT QISMI ---
+
+    const loginForm = document.getElementById('loginForm');
+    const messageBox = document.getElementById('messageBox');
+    const loginBtn = document.getElementById('loginBtn');
+
+    // Backend API manzili (O'zingiznikiga to'g'irlang)
+    const API_URL = "http://localhost:8080/api/auth/login";
+
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // 1. Inputlarni olish
+        const phone = document.getElementById('phone').value;
+        const password = document.getElementById('password').value;
+
+        // 2. Loading holatini yoqish
+        setLoading(true);
+        showMessage("", "");
+
+        try {
+            // 3. Backendga so'rov yuborish
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                // Backenddagi LoginRequest klassiga mos bo'lishi kerak
+                body: JSON.stringify({
+                    phoneNumber: phone, // yoki "username": phone
+                    password: password
+                })
+            });
+
+            // 4. Javobni tekshirish
+            if (!response.ok) {
+                // Agar 401 yoki 400 kelsa
+                throw new Error("Login yoki parol noto'g'ri!");
+            }
+
+            // 5. JSONni o'qish (LoginResponse dagi ma'lumotlar)
+            let data = await response.json();
+            data = { accessToken: data.accessToken, refreshToken: "...", role: data.role }
+
+            // 6. TOKENNI XOTIRAGA SAQLASH
+            if (data.accessToken) {
+                localStorage.setItem('accessToken', data.accessToken);
+
+                // Agar refresh token ham kelsa, uni ham saqlaymiz
+                if (data.refreshToken) {
+                    localStorage.setItem('refreshToken', data.refreshToken);
+                }
+
+                showMessage("Muvaffaqiyatli kirdingiz! Yo'naltirilmoqda...", "success");
+
+                // 2 sekunddan keyin Asosiy sahifaga o'tkazish
+                setTimeout(() => {
+                    if (data.role === 'ROLE_ADMIN'){
+                        window.location.href = "adminMenu.html"
+
+                    }
+                    else if(data.role === 'ROLE_USER'){
+                        window.location.href = "userMenu.html"
+                    }
+                    else {
+                    window.location.href = "dashboard.html";} // Boshqa sahifaga o'tish
+                }, 1500);
+            }
+
+        } catch (error) {
+            console.error("Xatolik:", error);
+            showMessage("Xatolik: " + error.message, "error");
+        } finally {
+            setLoading(false);
+        }
+    });
+
+    // Yordamchi funksiyalar
+    function showMessage(msg, type) {
+        messageBox.innerText = msg;
+        messageBox.className = "message " + type;
+        messageBox.style.display = msg ? 'block' : 'none';
+    }
+
+    function setLoading(isLoading) {
+        loginBtn.disabled = isLoading;
+        loginBtn.innerText = isLoading ? "Tekshirilmoqda..." : "Kirish";
+    }
+</script>
+
+</body>
+</html>
