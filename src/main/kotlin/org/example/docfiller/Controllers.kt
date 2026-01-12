@@ -98,7 +98,7 @@ class AttachController(
 }
 
 @RestController
-@RequestMapping("/employees")
+@RequestMapping("/api/employees")
 class EmployeeController(
     private val service: EmployeeService
 ){
