@@ -8,6 +8,7 @@ import org.example.docfiller.services.OrganizationService
 import org.example.docfiller.services.PlaceHolderService
 import org.springframework.core.io.Resource
 import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
@@ -48,7 +49,7 @@ class AuthController(
 }
 
 @RestController
-@RequestMapping("/api/organization")
+@RequestMapping("/api/organizations")
 class OrganizationController(
     private val service: OrganizationService
 ){
@@ -59,6 +60,10 @@ class OrganizationController(
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     fun getOne(@PathVariable id: Long): OrganizationResponse = service.getOne(id)
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("")
+    fun getAll(): List<OrganizationResponse> = service.getAll()
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
@@ -76,11 +81,12 @@ class AttachController(
 ) {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @PostMapping("/upload")
+    @PostMapping("/upload",
+        consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun upload(
         @RequestParam file: MultipartFile,
-        @RequestParam userId: Long
-    ) = attachService.upload(file, userId)
+    ) = attachService.upload(file)
+
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping("/download/{hash}")
     fun download(@PathVariable hash: UUID): ResponseEntity<Resource> {
@@ -93,7 +99,7 @@ class AttachController(
 }
 
 @RestController
-@RequestMapping("/employees")
+@RequestMapping("/api/employees")
 class EmployeeController(
     private val service: EmployeeService
 ){
@@ -104,6 +110,10 @@ class EmployeeController(
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     fun getOne(@PathVariable id: Long): EmployeeResponse = service.getOne(id)
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("")
+    fun getAll(): List<EmployeeResponse> = service.getAll()
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
