@@ -23,6 +23,7 @@ interface EmployeeService {
     fun register(request: RegisterRequest)
     fun create(request: EmployeeCreate)
     fun getOne(id: Long): EmployeeResponse
+    fun getAll(): List<EmployeeResponse>
     fun update(id: Long, request: EmployeeUpdate)
     fun delete(id: Long)
 }
@@ -103,10 +104,26 @@ class EmployeeServiceImpl(
                 employee.firstName,
                 employee.lastName,
                 employee.phoneNumber,
-                employee.organization?.let { it.id } as Long
+                employee.organization?.let { it.id } as Long,
+                employee.deleted
             )
         }
         throw EmployeeNotFoundException()
+    }
+
+    override fun getAll(): List<EmployeeResponse> {
+        val findEmployeeList = mutableListOf<EmployeeResponse>()
+        repository.findAll().forEach { employee ->
+            findEmployeeList.add(EmployeeResponse(
+                employee.id!!,
+                employee.firstName,
+                employee.lastName,
+                employee.phoneNumber,
+                employee.organization?.let { it.id } as Long,
+                employee.deleted
+            ))
+        }
+        return findEmployeeList
     }
 
     override fun update(id: Long, request: EmployeeUpdate) {

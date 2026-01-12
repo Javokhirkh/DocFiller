@@ -73,6 +73,7 @@ data class EmployeeResponse(
     val lastName: String,
     val phoneNumber: String,
     val organizationId: Long,
+    val deleted: Boolean,
 )
 
 data class EmployeeUpdate(
