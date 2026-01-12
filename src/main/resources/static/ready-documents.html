@@ -7,65 +7,36 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
-        /* --- STYLES --- */
+        /* STYLES (O'sha-o'sha) */
         body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
         .container { max-width: 1000px; margin: 0 auto; }
-
-        /* HEADER */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         h2 { color: #333; margin: 0; }
-
-        .back-btn {
-            text-decoration: none; color: #555; font-weight: bold;
-            border: 1px solid #ddd; padding: 8px 15px; border-radius: 5px;
-            background: white; transition: 0.3s;
-        }
+        .back-btn { text-decoration: none; color: #555; font-weight: bold; border: 1px solid #ddd; padding: 8px 15px; border-radius: 5px; background: white; transition: 0.3s; }
         .back-btn:hover { background: #eee; }
-
-        /* GRID LAYOUT */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-        }
-
-        /* CARD STYLE */
-        .card {
-            background: white; padding: 20px; border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: center;
-            border: 1px solid #eee; transition: 0.3s;
-            display: flex; flex-direction: column; align-items: center;
-        }
-
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: center; border: 1px solid #eee; transition: 0.3s; display: flex; flex-direction: column; align-items: center; }
         .card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
-
         .file-icon { font-size: 45px; margin-bottom: 15px; }
         .word-icon { color: #2b5797; }
         .pdf-icon { color: #dc3545; }
-
-        .file-name {
-            font-size: 16px; font-weight: 600; color: #333;
-            margin: 0 0 5px 0; word-break: break-all;
-        }
-
+        .file-name { font-size: 16px; font-weight: 600; color: #333; margin: 0 0 5px 0; word-break: break-all; }
         .file-size { font-size: 12px; color: #888; margin-bottom: 15px; }
 
-        /* DOWNLOAD BUTTON */
+        /* DOWNLOAD BUTTON STYLE */
         .download-btn {
             background-color: #28a745; color: white; text-decoration: none;
             padding: 10px 20px; border-radius: 6px; font-size: 14px;
             width: 100%; box-sizing: border-box; font-weight: bold;
             display: flex; align-items: center; justify-content: center; gap: 8px;
             transition: 0.2s;
+            border: none; /* Button bo'lgani uchun borderini o'chiramiz */
+            cursor: pointer;
         }
-
         .download-btn:hover { background-color: #218838; }
-        .download-btn i { font-size: 14px; }
+        .download-btn:disabled { background-color: #ccc; cursor: not-allowed; }
 
-        .empty-message {
-            text-align: center; width: 100%; grid-column: 1 / -1;
-            color: #777; font-size: 18px; margin-top: 50px;
-        }
+        .empty-message { text-align: center; width: 100%; grid-column: 1 / -1; color: #777; font-size: 18px; margin-top: 50px; }
     </style>
 </head>
 <body>
@@ -82,14 +53,13 @@
 </div>
 
 <script>
-    // --- CONFIG ---
     const API_URL = "http://localhost:8080/api/attach/readies";
     const grid = document.getElementById('filesGrid');
     const token = localStorage.getItem('accessToken');
 
     if (!token) window.location.href = "login.html";
 
-    // --- MAIN FUNCTION ---
+    // 1. ASOSIY YUKLASH FUNKSIYASI
     async function loadReadyFiles() {
         try {
             const response = await fetch(API_URL, {
@@ -102,7 +72,7 @@
 
             if (!response.ok) throw new Error("Hujjatlarni yuklab bo'lmadi");
 
-            const files = await response.json(); // List<FileDto>
+            const files = await response.json();
             renderFiles(files);
 
         } catch (error) {
@@ -111,7 +81,7 @@
         }
     }
 
-    // --- RENDER FUNCTION ---
+    // 2. KARTALARNI CHIZISH
     function renderFiles(files) {
         grid.innerHTML = "";
 
@@ -126,34 +96,77 @@
         }
 
         files.forEach(file => {
-            // 1. Fayl turiga qarab ikonka tanlash
             const isPdf = file.originalName && file.originalName.toLowerCase().endsWith('.pdf');
             const iconClass = isPdf ? 'fa-file-pdf pdf-icon' : 'fa-file-word word-icon';
-
-            // 2. Fayl hajmini chiroyli qilish (KB yoki MB)
             const sizeStr = formatBytes(file.size);
 
-            // 3. Kartochka yaratish
+            // Fayl nomi va URLini xavfsiz formatga o'tkazamiz
+            const fileName = file.originalName || 'document';
+            const fileUrl = file.fullPath;
+
             const card = document.createElement('div');
             card.className = 'card';
 
-            // DTO dagi 'fullPath' bu to'g'ridan-to'g'ri URL (http://localhost:8080/...)
-            // 'download' atributi brauzerga bu faylni ochmasdan, skachat qilishni aytadi
+            // O'ZGARISH: <a> link o'rniga <button> va onclick hodisasi
             card.innerHTML = `
                 <i class="fas ${iconClass} file-icon"></i>
-                <h3 class="file-name">${file.originalName || 'Nomsiz hujjat'}</h3>
+                <h3 class="file-name">${fileName}</h3>
                 <p class="file-size">${sizeStr}</p>
 
-                <a href="${file.fullPath}" class="download-btn" download target="_blank">
+                <button class="download-btn" onclick="downloadFile('${fileUrl}', '${fileName}', this)">
                     <i class="fas fa-download"></i> Yuklab olish
-                </a>
+                </button>
             `;
 
             grid.appendChild(card);
         });
     }
 
-    // --- HELPER: Bytes to KB/MB ---
+    // 3. (YANGI) TOKEN BILAN FAYL YUKLASH FUNKSIYASI
+    async function downloadFile(url, fileName, btnElement) {
+        // Tugmani bosib bo'lmaydigan qilib turamiz
+        const originalText = btnElement.innerHTML;
+        btnElement.disabled = true;
+        btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Yuklanmoqda...';
+
+        try {
+            // Backendga Token bilan so'rov yuboramiz
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+
+            if (!response.ok) throw new Error("Faylni yuklab bo'lmadi (403/404)");
+
+            // Javobni BLOB (fayl obyekti) ko'rinishida olamiz
+            const blob = await response.blob();
+
+            // Brauzer xotirasida shu blob uchun vaqtincha URL yaratamiz
+            const downloadUrl = window.URL.createObjectURL(blob);
+
+            // Yashirin <a> link yaratib, uni bosamiz
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = fileName; // Fayl nomini beramiz
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+
+            // Xotirani tozalaymiz
+            window.URL.revokeObjectURL(downloadUrl);
+
+        } catch (error) {
+            console.error(error);
+            alert("Xatolik: " + error.message);
+        } finally {
+            // Tugmani joyiga qaytaramiz
+            btnElement.disabled = false;
+            btnElement.innerHTML = originalText;
+        }
+    }
+
     function formatBytes(bytes, decimals = 2) {
         if (!+bytes) return '0 Bytes';
         const k = 1024;
@@ -163,9 +176,7 @@
         return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
     }
 
-    // Sahifa ochilganda ishga tushir
     loadReadyFiles();
-
 </script>
 
 </body>
